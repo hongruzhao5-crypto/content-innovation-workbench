@@ -607,6 +607,34 @@ svg {
   gap: 12px;
 }
 
+.integration-overview {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.integration-overview article {
+  min-height: 112px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-soft);
+}
+
+.integration-overview span,
+.integration-overview small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.integration-overview strong {
+  display: block;
+  margin: 9px 0 7px;
+  font-size: 28px;
+}
+
 .data-source-card {
   display: grid;
   gap: 12px;
@@ -682,6 +710,76 @@ svg {
 .source-map strong {
   display: block;
   margin-bottom: 6px;
+}
+
+.mapping-table {
+  display: grid;
+  grid-column: 1 / -1;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.mapping-row {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 1.2fr 0.7fr;
+  border-bottom: 1px solid var(--line);
+}
+
+.mapping-row:last-child {
+  border-bottom: 0;
+}
+
+.mapping-row.header {
+  color: var(--muted);
+  background: var(--panel-soft);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.mapping-row div {
+  min-width: 0;
+  padding: 10px 12px;
+  border-right: 1px solid var(--line);
+}
+
+.mapping-row div:last-child {
+  border-right: 0;
+}
+
+.sync-rule-grid {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.sync-rule-card {
+  display: grid;
+  gap: 8px;
+  min-height: 156px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fbfdfd;
+}
+
+.sync-rule-card > span {
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.sync-rule-card strong {
+  font-size: 15px;
+}
+
+.sync-rule-card p,
+.sync-rule-card small {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .account-card {
@@ -844,8 +942,10 @@ svg {
   .chart-area,
   .account-board,
   .buyer-switch,
+  .integration-overview,
   .data-source-grid,
   .source-map,
+  .sync-rule-grid,
   .action-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -879,10 +979,29 @@ svg {
   .account-board,
   .buyer-switch,
   .desk-summary,
+  .integration-overview,
   .data-source-grid,
   .source-map,
+  .sync-rule-grid,
   .action-strip {
     grid-template-columns: 1fr;
+  }
+
+  .mapping-row {
+    grid-template-columns: 1fr;
+  }
+
+  .mapping-row.header {
+    display: none;
+  }
+
+  .mapping-row div {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mapping-row div:last-child {
+    border-bottom: 0;
   }
 
   .cockpit-card.wide,

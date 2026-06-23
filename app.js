@@ -121,15 +121,15 @@ const modules = [
   },
   {
     id: "backendData",
-    title: "后台数据源",
-    nav: "后台",
+    title: "数据源接入层",
+    nav: "数据源",
     icon: "database-zap",
     priority: "P0",
-    status: "新增",
-    description: "承载飞书表格、商品卡核算、切片核算和 WPS 千川账户登记表，先把真实数据源映射到工作台。",
+    status: "接入层",
+    description: "把飞书文档和 WPS 在线表格作为正式数据源，无缝同步到投手、财务、报表和经营驾驶舱。",
     owner: "系统 / 运营",
-    next: "补齐表头和字段映射",
-    actions: ["登记数据源", "检查表头", "映射字段", "同步到工作台"],
+    next: "完成飞书授权和字段映射",
+    actions: ["授权飞书", "配置 WPS", "映射字段", "同步到底表"],
   },
   {
     id: "system",
@@ -216,39 +216,64 @@ const dataSourceRows = [
   {
     name: "璟美空间检查分析表",
     platform: "飞书",
-    status: "待接入",
+    status: "未授权",
     owner: "运营后台",
+    sync: "未来 API / 文档连接器",
     feeds: "管理驾驶舱 / 投手工作台 / 素材中心",
     fields: ["检查类型", "账号/素材", "异常项", "负责人", "处理状态"],
-    next: "进入飞书璟美空间，整理各类检查分析表表头",
+    targetTable: "异常检查表",
+    next: "授权飞书后读取表头和历史异常",
   },
   {
     name: "商品卡核算",
     platform: "飞书",
-    status: "待接入",
+    status: "未授权",
     owner: "商品卡投手",
+    sync: "未来 API / 定时同步",
     feeds: "商品卡中心 / 财务模块 / 数据报表",
     fields: ["日期", "账户名", "登记人", "收入", "成本", "利润", "异常"],
-    next: "确认商品卡核算表字段和日报口径",
+    targetTable: "商品卡核算表",
+    next: "授权飞书后同步商品卡日报和财务台账",
   },
   {
     name: "切片核算",
     platform: "飞书",
-    status: "待接入",
+    status: "未授权",
     owner: "切片投手",
+    sync: "未来 API / 定时同步",
     feeds: "切片中心 / 财务模块 / 数据报表",
     fields: ["日期", "达人/账户", "登记人", "消耗", "佣金", "挂账", "异常"],
-    next: "确认切片核算表字段和挂账口径",
+    targetTable: "切片核算表",
+    next: "授权飞书后同步切片日报、挂账和佣金",
   },
   {
     name: "抖音千川账户登记表3.13",
     platform: "WPS / 金山文档",
     status: "已读取 99 条",
     owner: "投手组 / 财务",
+    sync: "当前下载文件 / 后续在线同步",
     feeds: "投手工作台 / 账户中心 / 财务模块",
     fields: ["账号名", "登记人", "项目", "商品卡/切片", "充值", "开票"],
+    targetTable: "投手账户底表",
     next: "已按登记人和项目生成投手账户底表",
   },
+];
+
+const fieldMappingRows = [
+  ["WPS 千川账户登记表", "登记人", "投手账户底表.投手", "已映射"],
+  ["WPS 千川账户登记表", "项目", "投手账户底表.账户类型", "已映射"],
+  ["WPS 千川账户登记表", "账号名 / 账户ID", "投手账户底表.账户", "已映射"],
+  ["WPS 千川账户登记表", "账户状态 / 余额 / 备注", "投手工作台.异常提示", "已映射"],
+  ["飞书 商品卡核算", "日期 / 账户名 / 收入 / 成本 / 利润", "商品卡核算表", "待授权"],
+  ["飞书 切片核算", "日期 / 达人账户 / 消耗 / 佣金 / 挂账", "切片核算表", "待授权"],
+  ["飞书 璟美空间检查分析", "异常项 / 负责人 / 处理状态", "异常检查表", "待授权"],
+];
+
+const syncRuleRows = [
+  ["P0", "WPS 千川账户登记表", "手动下载更新", "投手账户底表", "已接入"],
+  ["P1", "飞书 商品卡核算", "每日 9:30 同步", "商品卡日报 / 财务台账", "待授权"],
+  ["P1", "飞书 切片核算", "每日 9:30 同步", "切片日报 / 财务台账", "待授权"],
+  ["P2", "飞书 璟美空间检查分析", "每 2 小时同步", "异常中心 / 驾驶舱", "待授权"],
 ];
 
 let activeModuleId = "buyerDesk";
@@ -487,7 +512,31 @@ function renderFinance() {
 }
 
 function renderBackendData() {
+  const connectedCount = dataSourceRows.filter((item) => item.status.includes("已")).length;
+  const pendingCount = dataSourceRows.length - connectedCount;
   chartArea.innerHTML = `
+    <div class="integration-overview">
+      <article>
+        <span>正式数据源</span>
+        <strong>${dataSourceRows.length}</strong>
+        <small>飞书文档 + WPS 在线表格</small>
+      </article>
+      <article>
+        <span>已接入</span>
+        <strong>${connectedCount}</strong>
+        <small>WPS 千川账户登记表</small>
+      </article>
+      <article>
+        <span>待授权</span>
+        <strong>${pendingCount}</strong>
+        <small>飞书商品卡 / 切片 / 检查分析</small>
+      </article>
+      <article>
+        <span>标准底表</span>
+        <strong>4</strong>
+        <small>账户 / 商品卡 / 切片 / 异常</small>
+      </article>
+    </div>
     <div class="data-source-grid">
       ${dataSourceRows
         .map(
@@ -499,11 +548,12 @@ function renderBackendData() {
               </div>
               <h3>${item.name}</h3>
               <p>${item.feeds}</p>
+              <p>同步方式：${item.sync}</p>
               <div class="field-list">
                 ${item.fields.map((field) => `<span>${field}</span>`).join("")}
               </div>
               <div class="source-bottom">
-                <span>${item.owner}</span>
+                <span>${item.owner} -> ${item.targetTable}</span>
                 <button class="mini-button" type="button">${item.next}</button>
               </div>
             </article>
@@ -513,19 +563,54 @@ function renderBackendData() {
     </div>
     <div class="source-map">
       <div>
-        <strong>接入判断</strong>
-        <p>后台不是另一个看板，它负责把飞书和 WPS 的真实表格变成投手、财务、报表都能共用的账户底表。</p>
+        <strong>接入原则</strong>
+        <p>不要求员工换工具重填数据，系统先吃掉现有飞书文档和 WPS 表格，再沉淀成统一业务底表。</p>
       </div>
       <div>
-        <strong>第一张底表</strong>
-        <p>先从 WPS 千川账户登记表抽出账号名、登记人、项目，生成投手账户表，再接商品卡核算和切片核算。</p>
+        <strong>当前进度</strong>
+        <p>WPS 千川账户登记表已生成投手账户底表；飞书文档需要授权后读取真实表头和行数据。</p>
       </div>
     </div>
+    <div class="mapping-table">
+      <div class="mapping-row header">
+        <div>原始数据源</div>
+        <div>原始字段</div>
+        <div>系统落点</div>
+        <div>状态</div>
+      </div>
+      ${fieldMappingRows
+        .map(
+          ([source, rawField, target, status]) => `
+            <div class="mapping-row">
+              <div>${source}</div>
+              <div>${rawField}</div>
+              <div>${target}</div>
+              <div><span class="status-pill small">${status}</span></div>
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+    <div class="sync-rule-grid">
+      ${syncRuleRows
+        .map(
+          ([priority, source, rule, target, status]) => `
+            <article class="sync-rule-card">
+              <span>${priority}</span>
+              <strong>${source}</strong>
+              <p>${rule}</p>
+              <small>${target}</small>
+              <div class="status-pill small">${status}</div>
+            </article>
+          `,
+        )
+        .join("")}
+    </div>
     <div class="action-strip">
-      <button class="quick-action" type="button"><i data-lucide="file-spreadsheet"></i> 录入表格链接</button>
-      <button class="quick-action" type="button"><i data-lucide="list-tree"></i> 检查字段表头</button>
-      <button class="quick-action" type="button"><i data-lucide="git-branch"></i> 建立字段映射</button>
-      <button class="quick-action" type="button"><i data-lucide="refresh-cw"></i> 同步工作台</button>
+      <button class="quick-action" type="button"><i data-lucide="key-round"></i> 授权飞书</button>
+      <button class="quick-action" type="button"><i data-lucide="file-spreadsheet"></i> 配置 WPS 表格</button>
+      <button class="quick-action" type="button"><i data-lucide="git-branch"></i> 保存字段映射</button>
+      <button class="quick-action" type="button"><i data-lucide="refresh-cw"></i> 手动同步</button>
     </div>
   `;
 }
