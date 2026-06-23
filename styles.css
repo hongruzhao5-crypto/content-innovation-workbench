@@ -561,6 +561,21 @@ svg {
   line-height: 1.6;
 }
 
+.account-stats {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.account-stats span {
+  padding: 6px 9px;
+  border-radius: 999px;
+  color: #315052;
+  background: #ffffff;
+  font-weight: 800;
+}
+
 .account-section {
   display: grid;
   gap: 10px;
@@ -851,9 +866,7 @@ svg {
   }
 
   .sidebar {
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    position: static;
   }
 
   .nav-list {

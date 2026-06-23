@@ -243,17 +243,18 @@ const dataSourceRows = [
   {
     name: "抖音千川账户登记表3.13",
     platform: "WPS / 金山文档",
-    status: "链接已登记",
+    status: "已读取 99 条",
     owner: "投手组 / 财务",
     feeds: "投手工作台 / 账户中心 / 财务模块",
     fields: ["账号名", "登记人", "项目", "商品卡/切片", "充值", "开票"],
-    next: "按账号名、登记人、项目拆成投手账户底表",
+    next: "已按登记人和项目生成投手账户底表",
   },
 ];
 
 let activeModuleId = "buyerDesk";
 let activeFilter = "all";
 let activeBuyerId = "liuxiuting";
+const realAccountRows = Array.isArray(window.realAccountRows) ? window.realAccountRows : [];
 
 const loginView = document.querySelector("#loginView");
 const erpView = document.querySelector("#erpView");
@@ -311,18 +312,39 @@ function getActiveBuyer() {
   return buyerProfiles.find((item) => item.id === activeBuyerId) || buyerProfiles[0];
 }
 
+function getBuyerAccounts(buyerName, accountType) {
+  return realAccountRows.filter((row) => row.登记人 === buyerName && row.账户类型 === accountType);
+}
+
+function getBuyerStats(buyerName) {
+  const rows = realAccountRows.filter((row) => row.登记人 === buyerName);
+  const productCount = rows.filter((row) => row.账户类型 === "商品卡").length;
+  const sliceCount = rows.filter((row) => row.账户类型 === "切片").length;
+  const uncategorizedCount = rows.filter((row) => row.账户类型 === "未归类").length;
+  const abnormalCount = rows.filter((row) => row.今日异常 !== "正常使用中").length;
+  return { rows, productCount, sliceCount, uncategorizedCount, abnormalCount };
+}
+
+function formatMoney(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) {
+    return "未填";
+  }
+  return Number(value).toLocaleString("zh-CN", { maximumFractionDigits: 2 });
+}
+
 function renderAccountCards(rows, owner) {
   return rows
     .map(
-      ([account, issue, action, button]) => `
+      (row) => `
         <article class="account-card">
           <div>
-            <strong>${account}</strong>
-            <span>${owner}</span>
+            <strong>${row.账户名称}</strong>
+            <span>${owner} / ${row.账户ID || "无账户ID"}</span>
           </div>
-          <div class="issue-tag">${issue}</div>
-          <p>${action}</p>
-          <button class="mini-button" type="button">${button}</button>
+          <div class="issue-tag">${row.今日异常}</div>
+          <p>余额 ${formatMoney(row.余额)} / 状态：${row.账户状态}</p>
+          <p>${row.项目} / ${row.账户用途 || "用途未填"}${row.备注 ? ` / ${row.备注}` : ""}</p>
+          <button class="mini-button" type="button">查看账户</button>
         </article>
       `,
     )
@@ -331,6 +353,10 @@ function renderAccountCards(rows, owner) {
 
 function renderBuyerDesk() {
   const buyer = getActiveBuyer();
+  const stats = getBuyerStats(buyer.name);
+  const productAccounts = getBuyerAccounts(buyer.name, "商品卡");
+  const sliceAccounts = getBuyerAccounts(buyer.name, "切片");
+  const uncategorizedAccounts = getBuyerAccounts(buyer.name, "未归类");
   chartArea.innerHTML = `
     <div class="buyer-desk-shell">
       <div class="buyer-switch">
@@ -352,27 +378,48 @@ function renderBuyerDesk() {
           <strong>${buyer.name}</strong>
         </div>
         <p>${buyer.today}</p>
+        <div class="account-stats">
+          <span>真实账户 ${stats.rows.length}</span>
+          <span>商品卡 ${stats.productCount}</span>
+          <span>切片 ${stats.sliceCount}</span>
+          <span>异常/待补 ${stats.abnormalCount}</span>
+        </div>
       </div>
 
       <div class="account-section">
         <div class="section-title">
           <i data-lucide="shopping-bag"></i>
-          <h3>商品卡账户</h3>
+          <h3>商品卡账户 ${productAccounts.length}</h3>
         </div>
         <div class="account-board compact-board">
-          ${renderAccountCards(buyer.productAccounts, buyer.name)}
+          ${renderAccountCards(productAccounts, buyer.name)}
         </div>
       </div>
 
       <div class="account-section">
         <div class="section-title">
           <i data-lucide="clapperboard"></i>
-          <h3>切片账户</h3>
+          <h3>切片账户 ${sliceAccounts.length}</h3>
         </div>
         <div class="account-board compact-board">
-          ${renderAccountCards(buyer.sliceAccounts, buyer.name)}
+          ${renderAccountCards(sliceAccounts, buyer.name)}
         </div>
       </div>
+      ${
+        uncategorizedAccounts.length
+          ? `
+            <div class="account-section">
+              <div class="section-title">
+                <i data-lucide="circle-help"></i>
+                <h3>未归类账户 ${uncategorizedAccounts.length}</h3>
+              </div>
+              <div class="account-board compact-board">
+                ${renderAccountCards(uncategorizedAccounts, buyer.name)}
+              </div>
+            </div>
+          `
+          : ""
+      }
     </div>
     <div class="action-strip">
       <button class="quick-action" type="button"><i data-lucide="external-link"></i> 打开当前账户</button>
