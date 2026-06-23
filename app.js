@@ -129,7 +129,7 @@ const modules = [
     description: "把飞书文档和 WPS 在线表格作为正式数据源，无缝同步到投手、财务、报表和经营驾驶舱。",
     owner: "系统 / 运营",
     next: "完成飞书授权和字段映射",
-    actions: ["授权飞书", "配置 WPS", "映射字段", "同步到底表"],
+    actions: ["接飞书接口", "配置 WPS", "映射字段", "同步到底表"],
   },
   {
     id: "system",
@@ -216,35 +216,35 @@ const dataSourceRows = [
   {
     name: "璟美空间检查分析表",
     platform: "飞书",
-    status: "未授权",
+    status: "文件夹已访问",
     owner: "运营后台",
     sync: "未来 API / 文档连接器",
     feeds: "管理驾驶舱 / 投手工作台 / 素材中心",
     fields: ["检查类型", "账号/素材", "异常项", "负责人", "处理状态"],
     targetTable: "异常检查表",
-    next: "授权飞书后读取表头和历史异常",
+    next: "已读取文件列表，待深入检查分析表",
   },
   {
     name: "商品卡核算",
     platform: "飞书",
-    status: "未授权",
+    status: "台账可读",
     owner: "商品卡投手",
     sync: "未来 API / 定时同步",
     feeds: "商品卡中心 / 财务模块 / 数据报表",
     fields: ["日期", "账户名", "登记人", "收入", "成本", "利润", "异常"],
     targetTable: "商品卡核算表",
-    next: "授权飞书后同步商品卡日报和财务台账",
+    next: "已读取台账结构和店铺退款率表",
   },
   {
     name: "切片核算",
     platform: "飞书",
-    status: "未授权",
+    status: "台账可读",
     owner: "切片投手",
     sync: "未来 API / 定时同步",
     feeds: "切片中心 / 财务模块 / 数据报表",
     fields: ["日期", "达人/账户", "登记人", "消耗", "佣金", "挂账", "异常"],
     targetTable: "切片核算表",
-    next: "授权飞书后同步切片日报、挂账和佣金",
+    next: "已读取台账结构和达人昵称库",
   },
   {
     name: "抖音千川账户登记表3.13",
@@ -264,22 +264,23 @@ const fieldMappingRows = [
   ["WPS 千川账户登记表", "项目", "投手账户底表.账户类型", "已映射"],
   ["WPS 千川账户登记表", "账号名 / 账户ID", "投手账户底表.账户", "已映射"],
   ["WPS 千川账户登记表", "账户状态 / 余额 / 备注", "投手工作台.异常提示", "已映射"],
-  ["飞书 商品卡核算", "日期 / 账户名 / 收入 / 成本 / 利润", "商品卡核算表", "待授权"],
-  ["飞书 切片核算", "日期 / 达人账户 / 消耗 / 佣金 / 挂账", "切片核算表", "待授权"],
-  ["飞书 璟美空间检查分析", "异常项 / 负责人 / 处理状态", "异常检查表", "待授权"],
+  ["飞书 商品卡核算", "核算批次 / 店铺明细JSON / 核算时间 / GSV ROI", "商品卡核算表", "已识别"],
+  ["飞书 切片核算", "源文件 / 核算结果 / 运营人业绩 / 达人业绩", "切片核算表", "已识别"],
+  ["飞书 璟美空间检查分析", "文件夹 / 总控看板 / 周报监控表", "异常检查表", "已识别"],
 ];
 
 const syncRuleRows = [
   ["P0", "WPS 千川账户登记表", "手动下载更新", "投手账户底表", "已接入"],
-  ["P1", "飞书 商品卡核算", "每日 9:30 同步", "商品卡日报 / 财务台账", "待授权"],
-  ["P1", "飞书 切片核算", "每日 9:30 同步", "切片日报 / 财务台账", "待授权"],
-  ["P2", "飞书 璟美空间检查分析", "每 2 小时同步", "异常中心 / 驾驶舱", "待授权"],
+  ["P1", "飞书 商品卡核算", "每日 9:30 同步", "商品卡日报 / 财务台账", "待接口"],
+  ["P1", "飞书 切片核算", "每日 9:30 同步", "切片日报 / 财务台账", "待接口"],
+  ["P2", "飞书 璟美空间检查分析", "每 2 小时同步", "异常中心 / 驾驶舱", "待接口"],
 ];
 
 let activeModuleId = "buyerDesk";
 let activeFilter = "all";
 let activeBuyerId = "liuxiuting";
 const realAccountRows = Array.isArray(window.realAccountRows) ? window.realAccountRows : [];
+const feishuSources = window.feishuSourceRows || { folders: [], tables: [] };
 
 const loginView = document.querySelector("#loginView");
 const erpView = document.querySelector("#erpView");
@@ -512,7 +513,7 @@ function renderFinance() {
 }
 
 function renderBackendData() {
-  const connectedCount = dataSourceRows.filter((item) => item.status.includes("已")).length;
+  const connectedCount = dataSourceRows.filter((item) => item.status.includes("已") || item.status.includes("可读") || item.status.includes("访问")).length;
   const pendingCount = dataSourceRows.length - connectedCount;
   chartArea.innerHTML = `
     <div class="integration-overview">
@@ -527,9 +528,9 @@ function renderBackendData() {
         <small>WPS 千川账户登记表</small>
       </article>
       <article>
-        <span>待授权</span>
+        <span>待接口</span>
         <strong>${pendingCount}</strong>
-        <small>飞书商品卡 / 切片 / 检查分析</small>
+        <small>飞书全量行数据 / 定时同步</small>
       </article>
       <article>
         <span>标准底表</span>
@@ -568,7 +569,30 @@ function renderBackendData() {
       </div>
       <div>
         <strong>当前进度</strong>
-        <p>WPS 千川账户登记表已生成投手账户底表；飞书文档需要授权后读取真实表头和行数据。</p>
+        <p>WPS 千川账户登记表已生成投手账户底表；飞书文件夹和台账已可访问，下一步接下载/接口能力拿全量行数据。</p>
+      </div>
+    </div>
+    <div class="feishu-source-panel">
+      <div class="panel-header compact">
+        <h2>飞书已读取内容</h2>
+        <span class="status-pill small">${feishuSources.folders.length} 个文件夹 / ${feishuSources.tables.length} 张表</span>
+      </div>
+      <div class="feishu-source-grid">
+        ${feishuSources.tables
+          .map(
+            (item) => `
+              <article class="feishu-source-card">
+                <span>${item.type}</span>
+                <strong>${item.name}</strong>
+                <p>${item.systemTarget}</p>
+                <div class="field-list">
+                  ${item.visibleFields.map((field) => `<span>${field}</span>`).join("")}
+                </div>
+                <small>${item.status}${item.visibleRows !== undefined ? ` / 可见记录 ${item.visibleRows}` : ""}</small>
+              </article>
+            `,
+          )
+          .join("")}
       </div>
     </div>
     <div class="mapping-table">
@@ -607,7 +631,7 @@ function renderBackendData() {
         .join("")}
     </div>
     <div class="action-strip">
-      <button class="quick-action" type="button"><i data-lucide="key-round"></i> 授权飞书</button>
+      <button class="quick-action" type="button"><i data-lucide="key-round"></i> 接飞书接口</button>
       <button class="quick-action" type="button"><i data-lucide="file-spreadsheet"></i> 配置 WPS 表格</button>
       <button class="quick-action" type="button"><i data-lucide="git-branch"></i> 保存字段映射</button>
       <button class="quick-action" type="button"><i data-lucide="refresh-cw"></i> 手动同步</button>
