@@ -514,7 +514,7 @@ function renderFinance() {
 
 function renderBackendData() {
   const connectedCount = dataSourceRows.filter((item) => item.status.includes("已") || item.status.includes("可读") || item.status.includes("访问")).length;
-  const pendingCount = dataSourceRows.length - connectedCount;
+  const pendingInterfaceCount = dataSourceRows.filter((item) => item.platform === "飞书").length;
   chartArea.innerHTML = `
     <div class="integration-overview">
       <article>
@@ -525,11 +525,11 @@ function renderBackendData() {
       <article>
         <span>已接入</span>
         <strong>${connectedCount}</strong>
-        <small>WPS 千川账户登记表</small>
+        <small>WPS 真实数据 + 飞书已访问</small>
       </article>
       <article>
         <span>待接口</span>
-        <strong>${pendingCount}</strong>
+        <strong>${pendingInterfaceCount}</strong>
         <small>飞书全量行数据 / 定时同步</small>
       </article>
       <article>
