@@ -96,6 +96,18 @@ const modules = [
     actions: ["查看台账", "创建充值提醒", "发票对账", "通知投手"],
   },
   {
+    id: "aiImages",
+    title: "AI 生图",
+    nav: "AI 生图",
+    icon: "sparkles",
+    priority: "P1",
+    status: "占位框架",
+    description: "独立承载商品主图、场景图、对比图、封面图、待审核 AI 图、生成记录和可引用状态，不混入投手项目列。",
+    owner: "投手组 / 剪辑组",
+    next: "先建立分类、审核、引用状态框架",
+    actions: ["商品主图", "场景图", "对比图", "封面图", "审核 AI 图", "查看生成记录"],
+  },
+  {
     id: "reports",
     title: "数据报表",
     nav: "报表",
@@ -197,6 +209,51 @@ const buyerProfiles = [
       ["切片-开票跟进", "发票待核对", "核对开票金额并交财务", "核对发票"],
     ],
   },
+];
+
+const buyerProjectRows = [
+  {
+    title: "商品卡项目",
+    icon: "shopping-bag",
+    detail: "进入商品卡账户、计划、素材、台账和充值动作。",
+    target: "商品卡账户",
+  },
+  {
+    title: "切片项目",
+    icon: "clapperboard",
+    detail: "进入切片账户、达人素材、投流数据、挂账和开票动作。",
+    target: "切片账户",
+  },
+  {
+    title: "素材审核",
+    icon: "badge-check",
+    detail: "处理卡审素材、低质搬运、待上传素材和剪辑反馈。",
+    target: "素材/评论",
+  },
+];
+
+const buyerDailyActions = [
+  ["充值检查", "wallet", "检查余额、充值到账、挂账和开票状态，避免账户停跑。"],
+  ["上传素材", "upload-cloud", "把已确认素材上传到对应商品卡或切片账户计划。"],
+  ["卡审提审", "badge-check", "筛选卡审素材，合格则提审，有问题则反馈剪辑。"],
+  ["数据调控", "sliders-horizontal", "进入账户看数据，执行删素材、调 ROI、调预算、追投、一键起量。"],
+  ["素材数据分析", "line-chart", "查看账户内素材数据，判断保留、放量、替换或删除。"],
+  ["评论处理", "message-square-x", "处理评论区差评、异常评论和影响投放转化的问题。"],
+];
+
+const aiImageBuckets = [
+  ["商品主图", "image", "商品卡与投放入口可引用的主图池。"],
+  ["场景图", "panel-top", "按产品场景、使用人群、卖点表达沉淀。"],
+  ["对比图", "columns-3", "用于功效、成分、前后对比的图像框架。"],
+  ["封面图", "rectangle-horizontal", "短视频、切片、素材封面图入口。"],
+  ["待审核 AI 图", "scan-eye", "生成后先审核，再开放给投手和剪辑引用。"],
+  ["生成记录", "history", "记录提示词、来源产品、生成时间和审核状态。"],
+];
+
+const aiImageReferenceRows = [
+  ["投手可引用", "待接入", "商品主图 / 对比图 / 卡审素材补图"],
+  ["剪辑可引用", "待接入", "封面图 / 场景图 / 短视频画面素材"],
+  ["审核状态", "占位", "待审核 / 可用 / 驳回 / 已引用"],
 ];
 
 const editorRows = [
@@ -412,6 +469,49 @@ function renderBuyerDesk() {
         </div>
       </div>
 
+      <div class="buyer-workflow">
+        <div class="project-column">
+          <div class="section-title">
+            <i data-lucide="folder-kanban"></i>
+            <h3>项目列</h3>
+          </div>
+          ${buyerProjectRows
+            .map(
+              (item) => `
+                <article class="project-card">
+                  <div>
+                    <i data-lucide="${item.icon}"></i>
+                    <strong>${item.title}</strong>
+                  </div>
+                  <p>${item.detail}</p>
+                  <span>${item.target}</span>
+                </article>
+              `,
+            )
+            .join("")}
+        </div>
+
+        <div class="daily-action-panel">
+          <div class="section-title">
+            <i data-lucide="list-checks"></i>
+            <h3>今日 6 个真实操作入口</h3>
+          </div>
+          <div class="daily-action-grid">
+            ${buyerDailyActions
+              .map(
+                ([title, icon, detail]) => `
+                  <button class="daily-action" type="button">
+                    <i data-lucide="${icon}"></i>
+                    <strong>${title}</strong>
+                    <span>${detail}</span>
+                  </button>
+                `,
+              )
+              .join("")}
+          </div>
+        </div>
+      </div>
+
       <div class="account-section">
         <div class="section-title">
           <i data-lucide="shopping-bag"></i>
@@ -448,10 +548,58 @@ function renderBuyerDesk() {
       }
     </div>
     <div class="action-strip">
-      <button class="quick-action" type="button"><i data-lucide="external-link"></i> 打开当前账户</button>
-      <button class="quick-action" type="button"><i data-lucide="edit-3"></i> 记录账户调整</button>
-      <button class="quick-action" type="button"><i data-lucide="alert-triangle"></i> 处理卡审/低质搬运</button>
-      <button class="quick-action" type="button"><i data-lucide="wallet"></i> 跟进充值开票</button>
+      <button class="quick-action" type="button"><i data-lucide="wallet"></i> 充值检查</button>
+      <button class="quick-action" type="button"><i data-lucide="upload-cloud"></i> 上传素材</button>
+      <button class="quick-action" type="button"><i data-lucide="sliders-horizontal"></i> 数据调控</button>
+      <button class="quick-action" type="button"><i data-lucide="message-square-x"></i> 评论处理</button>
+    </div>
+  `;
+}
+
+function renderAIImages() {
+  chartArea.innerHTML = `
+    <div class="ai-image-layout">
+      <div class="ai-image-grid">
+        ${aiImageBuckets
+          .map(
+            ([title, icon, detail]) => `
+              <article class="ai-image-card">
+                <div>
+                  <i data-lucide="${icon}"></i>
+                  <strong>${title}</strong>
+                </div>
+                <p>${detail}</p>
+                <button class="mini-button" type="button">进入占位</button>
+              </article>
+            `,
+          )
+          .join("")}
+      </div>
+      <div class="reference-status-panel">
+        <div class="section-title">
+          <i data-lucide="link-2"></i>
+          <h3>投手 / 剪辑可引用状态</h3>
+        </div>
+        <div class="reference-status-list">
+          ${aiImageReferenceRows
+            .map(
+              ([name, status, detail]) => `
+                <div class="reference-row">
+                  <strong>${name}</strong>
+                  <span>${detail}</span>
+                  <em>${status}</em>
+                </div>
+              `,
+            )
+            .join("")}
+        </div>
+      </div>
+    </div>
+    <div class="action-strip">
+      <button class="quick-action" type="button"><i data-lucide="image-plus"></i> 新增生成需求</button>
+      <button class="quick-action" type="button"><i data-lucide="scan-eye"></i> 审核 AI 图</button>
+      <button class="quick-action" type="button"><i data-lucide="history"></i> 查看生成记录</button>
+      <button class="quick-action" type="button"><i data-lucide="link-2"></i> 管理引用状态</button>
     </div>
   `;
 }
@@ -701,6 +849,8 @@ function render() {
     renderEditorDesk();
   } else if (activeModuleId === "finance") {
     renderFinance();
+  } else if (activeModuleId === "aiImages") {
+    renderAIImages();
   } else if (activeModuleId === "backendData") {
     renderBackendData();
   } else {

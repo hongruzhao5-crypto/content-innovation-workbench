@@ -581,6 +581,97 @@ svg {
   gap: 10px;
 }
 
+.buyer-workflow {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.project-column,
+.daily-action-panel,
+.reference-status-panel {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.project-card,
+.ai-image-card {
+  display: grid;
+  gap: 9px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfdfd;
+}
+
+.project-card div,
+.ai-image-card div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-card svg,
+.ai-image-card svg {
+  color: var(--accent-dark);
+}
+
+.project-card p,
+.ai-image-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.project-card span {
+  width: fit-content;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: #315052;
+  background: var(--panel-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.daily-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.daily-action {
+  display: grid;
+  gap: 7px;
+  min-height: 128px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  background: #fbfdfd;
+  text-align: left;
+}
+
+.daily-action:hover {
+  border-color: rgba(0, 168, 132, 0.42);
+  background: #effaf7;
+}
+
+.daily-action svg {
+  color: var(--accent-dark);
+}
+
+.daily-action span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .section-title {
   display: flex;
   align-items: center;
@@ -598,6 +689,54 @@ svg {
 
 .compact-board {
   grid-column: auto;
+}
+
+.ai-image-layout {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 12px;
+}
+
+.ai-image-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ai-image-card {
+  min-height: 152px;
+}
+
+.reference-status-list {
+  display: grid;
+  gap: 10px;
+}
+
+.reference-row {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfdfd;
+}
+
+.reference-row span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.reference-row em {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: var(--accent-dark);
+  background: #dff5ef;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
 }
 
 .data-source-grid {
@@ -984,6 +1123,10 @@ svg {
   .chart-area,
   .account-board,
   .buyer-switch,
+  .buyer-workflow,
+  .daily-action-grid,
+  .ai-image-layout,
+  .ai-image-grid,
   .integration-overview,
   .data-source-grid,
   .feishu-source-grid,
@@ -1021,6 +1164,10 @@ svg {
   .mini-cockpit,
   .account-board,
   .buyer-switch,
+  .buyer-workflow,
+  .daily-action-grid,
+  .ai-image-layout,
+  .ai-image-grid,
   .desk-summary,
   .integration-overview,
   .data-source-grid,
