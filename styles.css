@@ -499,6 +499,87 @@ svg {
   gap: 12px;
 }
 
+.buyer-desk-shell {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 14px;
+}
+
+.buyer-switch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.buyer-tab {
+  display: grid;
+  gap: 4px;
+  min-height: 64px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  background: #fbfdfd;
+  text-align: left;
+}
+
+.buyer-tab.active,
+.buyer-tab:hover {
+  border-color: rgba(0, 168, 132, 0.42);
+  background: #effaf7;
+}
+
+.buyer-tab span,
+.desk-summary span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.desk-summary {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-soft);
+}
+
+.desk-summary strong,
+.desk-summary span {
+  display: block;
+}
+
+.desk-summary p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.account-section {
+  display: grid;
+  gap: 10px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.section-title svg {
+  color: var(--accent-dark);
+}
+
+.compact-board {
+  grid-column: auto;
+}
+
 .account-card {
   display: grid;
   gap: 10px;
@@ -658,6 +739,7 @@ svg {
   .metric-grid,
   .chart-area,
   .account-board,
+  .buyer-switch,
   .action-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -691,6 +773,8 @@ svg {
   .chart-area,
   .mini-cockpit,
   .account-board,
+  .buyer-switch,
+  .desk-summary,
   .action-strip {
     grid-template-columns: 1fr;
   }

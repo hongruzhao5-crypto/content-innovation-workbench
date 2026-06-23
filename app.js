@@ -142,11 +142,49 @@ const todos = [
   ["完成台账核算检查", "数据报表 / 等待 n8n 返回结果"],
 ];
 
-const accountRows = [
-  ["千川-商品卡-赫本希", "罗沛/投手组", "ROI 低", "立即调整", "打开后台"],
-  ["千川-切片-佳乐", "佳乐", "低质搬运", "提审或删除", "打开后台"],
-  ["达人账户-秀厅", "刘秀厅", "素材待上传", "上传精剪素材", "打开后台"],
-  ["商品卡账户-花花", "李树花", "待充值", "记录充值金额", "打开后台"],
+const buyerProfiles = [
+  {
+    id: "liuxiuting",
+    name: "刘秀厅",
+    role: "投手组长",
+    today: "商品卡素材审核 / 切片素材复审 / 低质搬运处理 / 账户充值跟进",
+    productAccounts: [
+      ["商品卡-赫本希", "ROI 低", "进入千川账户调整计划", "打开后台"],
+      ["商品卡-牙膏新包装", "素材待上传", "审核精剪素材后上传计划", "上传素材"],
+    ],
+    sliceAccounts: [
+      ["切片-秀厅达人账户", "素材待复审", "14:00-18:00 审查切片素材", "查看素材"],
+      ["切片-直播投放账户", "充值待确认", "确认余额和充值到账状态", "确认充值"],
+    ],
+  },
+  {
+    id: "yuanjiale",
+    name: "苑佳乐",
+    role: "投手组员",
+    today: "切片数据导出 / 切片台账核算 / 切片账户充值 / 挂账和开票跟进",
+    productAccounts: [
+      ["商品卡-协助账户", "数据待核对", "交叉检查商品卡日报异常", "核对数据"],
+      ["商品卡-低质搬运", "待处理", "提审或删除低质搬运素材", "处理素材"],
+    ],
+    sliceAccounts: [
+      ["切片-佳乐千川账户", "低质搬运", "进入账户处理提审或删除", "打开后台"],
+      ["切片-达人账户组", "挂账跟进", "更新充值记录和挂账状态", "更新记录"],
+    ],
+  },
+  {
+    id: "lishuhua",
+    name: "李树花",
+    role: "投手组员",
+    today: "商品卡数据导出 / 商品卡台账核算 / 商品卡开票 / 充值记录更新",
+    productAccounts: [
+      ["商品卡-花花主账户", "待充值", "记录充值金额并确认到账", "记录充值"],
+      ["商品卡-计划维护账户", "卡审问题", "反馈卡审点给剪辑修改", "处理卡审"],
+    ],
+    sliceAccounts: [
+      ["切片-协助账户", "素材待上传", "确认素材无误后上传达人账户", "上传素材"],
+      ["切片-开票跟进", "发票待核对", "核对开票金额并交财务", "核对发票"],
+    ],
+  },
 ];
 
 const editorRows = [
@@ -164,6 +202,7 @@ const financeRows = [
 
 let activeModuleId = "buyerDesk";
 let activeFilter = "all";
+let activeBuyerId = "liuxiuting";
 
 const loginView = document.querySelector("#loginView");
 const erpView = document.querySelector("#erpView");
@@ -217,30 +256,78 @@ function renderCards() {
     .join("");
 }
 
+function getActiveBuyer() {
+  return buyerProfiles.find((item) => item.id === activeBuyerId) || buyerProfiles[0];
+}
+
+function renderAccountCards(rows, owner) {
+  return rows
+    .map(
+      ([account, issue, action, button]) => `
+        <article class="account-card">
+          <div>
+            <strong>${account}</strong>
+            <span>${owner}</span>
+          </div>
+          <div class="issue-tag">${issue}</div>
+          <p>${action}</p>
+          <button class="mini-button" type="button">${button}</button>
+        </article>
+      `,
+    )
+    .join("");
+}
+
 function renderBuyerDesk() {
+  const buyer = getActiveBuyer();
   chartArea.innerHTML = `
-    <div class="account-board">
-      ${accountRows
-        .map(
-          ([account, owner, issue, action, button]) => `
-            <article class="account-card">
-              <div>
-                <strong>${account}</strong>
-                <span>${owner}</span>
-              </div>
-              <div class="issue-tag">${issue}</div>
-              <p>${action}</p>
-              <button class="mini-button" type="button">${button}</button>
-            </article>
-          `,
-        )
-        .join("")}
+    <div class="buyer-desk-shell">
+      <div class="buyer-switch">
+        ${buyerProfiles
+          .map(
+            (item) => `
+              <button class="buyer-tab ${item.id === activeBuyerId ? "active" : ""}" type="button" data-buyer="${item.id}">
+                <strong>${item.name}</strong>
+                <span>${item.role}</span>
+              </button>
+            `,
+          )
+          .join("")}
+      </div>
+
+      <div class="desk-summary">
+        <div>
+          <span>当前投手</span>
+          <strong>${buyer.name}</strong>
+        </div>
+        <p>${buyer.today}</p>
+      </div>
+
+      <div class="account-section">
+        <div class="section-title">
+          <i data-lucide="shopping-bag"></i>
+          <h3>商品卡账户</h3>
+        </div>
+        <div class="account-board compact-board">
+          ${renderAccountCards(buyer.productAccounts, buyer.name)}
+        </div>
+      </div>
+
+      <div class="account-section">
+        <div class="section-title">
+          <i data-lucide="clapperboard"></i>
+          <h3>切片账户</h3>
+        </div>
+        <div class="account-board compact-board">
+          ${renderAccountCards(buyer.sliceAccounts, buyer.name)}
+        </div>
+      </div>
     </div>
     <div class="action-strip">
-      <button class="quick-action" type="button"><i data-lucide="external-link"></i> 打开账户后台</button>
-      <button class="quick-action" type="button"><i data-lucide="edit-3"></i> 记录调整动作</button>
-      <button class="quick-action" type="button"><i data-lucide="alert-triangle"></i> 处理卡审问题</button>
-      <button class="quick-action" type="button"><i data-lucide="calendar-check"></i> 明日复看结果</button>
+      <button class="quick-action" type="button"><i data-lucide="external-link"></i> 打开当前账户</button>
+      <button class="quick-action" type="button"><i data-lucide="edit-3"></i> 记录账户调整</button>
+      <button class="quick-action" type="button"><i data-lucide="alert-triangle"></i> 处理卡审/低质搬运</button>
+      <button class="quick-action" type="button"><i data-lucide="wallet"></i> 跟进充值开票</button>
     </div>
   `;
 }
@@ -387,6 +474,13 @@ document.addEventListener("click", (event) => {
   const moduleTarget = event.target.closest("[data-module]");
   if (moduleTarget) {
     activeModuleId = moduleTarget.dataset.module;
+    render();
+    return;
+  }
+
+  const buyerTarget = event.target.closest("[data-buyer]");
+  if (buyerTarget) {
+    activeBuyerId = buyerTarget.dataset.buyer;
     render();
     return;
   }
