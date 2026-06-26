@@ -661,13 +661,13 @@ function renderBuyerDesk() {
     <div class="erp-workbench">
       <div class="erp-system-header">
         <div>
-          <span>投手作战 ERP 表格版</span>
-          <strong>今日处理中心</strong>
+          <span>投放工作台</span>
+          <strong>今日账户与素材处理</strong>
         </div>
         <div class="erp-system-actions">
-          <button class="mini-button" type="button">刷新数据</button>
-          <button class="mini-button" type="button">同步千川</button>
-          <button class="mini-button" type="button">导入账户表</button>
+          <button class="mini-button" type="button">刷新</button>
+          <button class="mini-button" type="button">同步</button>
+          <button class="mini-button" type="button">导入</button>
         </div>
       </div>
 
@@ -725,7 +725,7 @@ function renderBuyerDesk() {
         <div class="erp-panel-title">
           <div>
             <h3>今日账户处理表</h3>
-            <p>按国内电商 ERP / 投放后台方式组织：先筛选，再看状态，再批量处理。</p>
+            <p>从真实账户表生成，ROI 与素材数据接入后自动补齐。</p>
           </div>
           <div class="erp-batch-actions">
             <button class="mini-button" type="button">批量标记已看</button>
@@ -739,22 +739,22 @@ function renderBuyerDesk() {
       <div class="erp-process-grid">
         <section class="erp-process-card">
           <div><i data-lucide="badge-check"></i><strong>卡审处理</strong></div>
-          <p>卡审不过的素材进入这里，直接转给对应剪辑，返回后重新提审。</p>
+          <p>卡审不过后转剪辑，返回后重新提审。</p>
           <button class="mini-button" type="button">查看卡审队列</button>
         </section>
         <section class="erp-process-card">
           <div><i data-lucide="upload-cloud"></i><strong>素材上传</strong></div>
-          <p>审核通过素材按账户/项目进入待上传列表，减少投手自己找素材。</p>
+          <p>按账户与项目沉淀待上传素材。</p>
           <button class="mini-button" type="button">查看待上传</button>
         </section>
         <section class="erp-process-card">
           <div><i data-lucide="receipt-text"></i><strong>发票台账</strong></div>
-          <p>完整台账留在财务模块，投手只处理需要人工确认的充值、发票、挂账异常。</p>
+          <p>只保留需要人工确认的财务异常。</p>
           <button class="mini-button" type="button">查看待确认</button>
         </section>
         <section class="erp-process-card">
           <div><i data-lucide="workflow"></i><strong>自动化状态</strong></div>
-          <p>日报、ROI、卡审素材、财务核算接入后，统一在这里看同步状态。</p>
+          <p>查看日报、ROI、卡审、核算同步状态。</p>
           <button class="mini-button" type="button">查看执行日志</button>
         </section>
       </div>
