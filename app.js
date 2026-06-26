@@ -97,15 +97,15 @@ const modules = [
   },
   {
     id: "aiImages",
-    title: "AI 生图",
-    nav: "AI 生图",
+    title: "图片审核及制作",
+    nav: "图片审核",
     icon: "sparkles",
     priority: "P1",
-    status: "占位框架",
-    description: "独立承载商品主图、场景图、对比图、封面图、待审核 AI 图、生成记录和可引用状态，不混入投手项目列。",
+    status: "审核优先",
+    description: "先做美妆个护图片与文案合规审核，通过后再接 OpenAI Imagine 生图制作，最后产出可被投手和剪辑引用的图片。",
     owner: "投手组 / 剪辑组",
-    next: "先建立分类、审核、引用状态框架",
-    actions: ["商品主图", "场景图", "对比图", "封面图", "审核 AI 图", "查看生成记录"],
+    next: "接入 beauty-compliance-audit 审核规则，再接 OpenAI Imagine 生成链路",
+    actions: ["上传审核", "违规改写", "通过后生图", "产出图片", "引用记录"],
   },
   {
     id: "reports",
@@ -241,19 +241,51 @@ const buyerDailyActions = [
   ["评论处理", "message-square-x", "处理评论区差评、异常评论和影响投放转化的问题。"],
 ];
 
-const aiImageBuckets = [
-  ["商品主图", "image", "商品卡与投放入口可引用的主图池。"],
-  ["场景图", "panel-top", "按产品场景、使用人群、卖点表达沉淀。"],
-  ["对比图", "columns-3", "用于功效、成分、前后对比的图像框架。"],
-  ["封面图", "rectangle-horizontal", "短视频、切片、素材封面图入口。"],
-  ["待审核 AI 图", "scan-eye", "生成后先审核，再开放给投手和剪辑引用。"],
-  ["生成记录", "history", "记录提示词、来源产品、生成时间和审核状态。"],
+const imageProductionSteps = [
+  {
+    title: "1. 图片/文案审核",
+    icon: "scan-eye",
+    status: "前置必做",
+    detail: "接入 beauty-compliance-audit：先审主图、详情页、封面图里的美妆个护违规词和违规宣称。",
+    action: "上传审核",
+  },
+  {
+    title: "2. 违规改写确认",
+    icon: "file-pen-line",
+    status: "人工复核",
+    detail: "命中医疗功效、绝对化、安全承诺、驱蚊农药等高危项时，先给改写建议，确认后才能进入制作。",
+    action: "查看建议",
+  },
+  {
+    title: "3. OpenAI Imagine 生图",
+    icon: "sparkles",
+    status: "待接接口",
+    detail: "审核通过后，把合规卖点、产品信息、画面要求送入 OpenAI Imagine，生成商品主图、场景图、对比图或封面图。",
+    action: "开始生图",
+  },
+  {
+    title: "4. 产出与引用",
+    icon: "image-check",
+    status: "可追踪",
+    detail: "生成图进入成品池，记录来源、审核状态、提示词、用途，并开放给投手和剪辑引用。",
+    action: "查看成品",
+  },
 ];
 
-const aiImageReferenceRows = [
-  ["投手可引用", "待接入", "商品主图 / 对比图 / 卡审素材补图"],
-  ["剪辑可引用", "待接入", "封面图 / 场景图 / 短视频画面素材"],
-  ["审核状态", "占位", "待审核 / 可用 / 驳回 / 已引用"],
+const complianceRuleRows = [
+  ["医疗功效", "高危", "治疗、消炎、止痒、杀菌、祛斑、生发等药用/疗效表达"],
+  ["绝对化", "高危", "最、第一、顶级、国家级、唯一、首选、快速见效等绝对化用语"],
+  ["安全承诺", "高危", "0刺激、无副作用、婴童可用、全家可用、纯天然、100%、99% 等承诺"],
+  ["驱蚊农药", "高危", "防蚊、驱蚊、灭蚊、蚊虫叮咬等农药类功能宣称"],
+];
+
+const imageOutputRows = [
+  ["商品主图", "审核通过后生成", "商品卡 / 投放入口可引用"],
+  ["场景图", "审核通过后生成", "剪辑、素材库、商品详情可引用"],
+  ["对比图", "审核通过后生成", "需要避免夸大功效和前后对比违规"],
+  ["封面图", "审核通过后生成", "短视频、切片、素材封面可引用"],
+  ["待审核图", "审核中", "未通过前不能进入生成和引用"],
+  ["生成记录", "自动沉淀", "记录提示词、审核结果、输出图片和引用人"],
 ];
 
 const editorRows = [
@@ -645,48 +677,100 @@ function renderBuyerDesk() {
 
 function renderAIImages() {
   chartArea.innerHTML = `
-    <div class="ai-image-layout">
-      <div class="ai-image-grid">
-        ${aiImageBuckets
-          .map(
-            ([title, icon, detail]) => `
-              <article class="ai-image-card">
-                <div>
-                  <i data-lucide="${icon}"></i>
-                  <strong>${title}</strong>
-                </div>
-                <p>${detail}</p>
-                <button class="mini-button" type="button">进入占位</button>
-              </article>
-            `,
-          )
-          .join("")}
-      </div>
-      <div class="reference-status-panel">
+    <div class="image-production-shell">
+      <section class="image-flow-panel">
         <div class="section-title">
-          <i data-lucide="link-2"></i>
-          <h3>投手 / 剪辑可引用状态</h3>
+          <i data-lucide="workflow"></i>
+          <h3>图片审核及制作流程</h3>
         </div>
-        <div class="reference-status-list">
-          ${aiImageReferenceRows
+        <div class="image-production-steps">
+          ${imageProductionSteps
             .map(
-              ([name, status, detail]) => `
-                <div class="reference-row">
-                  <strong>${name}</strong>
-                  <span>${detail}</span>
-                  <em>${status}</em>
-                </div>
+              (item) => `
+                <article class="image-step-card">
+                  <div class="image-step-top">
+                    <i data-lucide="${item.icon}"></i>
+                    <span>${item.status}</span>
+                  </div>
+                  <strong>${item.title}</strong>
+                  <p>${item.detail}</p>
+                  <button class="mini-button" type="button">${item.action}</button>
+                </article>
               `,
             )
             .join("")}
         </div>
-      </div>
+      </section>
+
+      <section class="image-flow-panel">
+        <div class="section-title">
+          <i data-lucide="shield-alert"></i>
+          <h3>审核规则来源</h3>
+        </div>
+        <div class="compliance-source">
+          <strong>beauty-compliance-audit skill</strong>
+          <span>先按美妆个护口径做硬规则兜底，再做语义补抓；审核通过后才允许进入 OpenAI Imagine 生图。</span>
+        </div>
+        <div class="compliance-rule-grid">
+          ${complianceRuleRows
+            .map(
+              ([category, level, detail]) => `
+                <article class="compliance-rule-card">
+                  <div>
+                    <strong>${category}</strong>
+                    <span>${level}</span>
+                  </div>
+                  <p>${detail}</p>
+                </article>
+              `,
+            )
+            .join("")}
+        </div>
+      </section>
+
+      <section class="image-flow-panel">
+        <div class="section-title">
+          <i data-lucide="image"></i>
+          <h3>生成产出</h3>
+        </div>
+        <div class="image-output-grid">
+          ${imageOutputRows
+          .map(
+            ([title, status, detail]) => `
+              <article class="image-output-card">
+                <div>
+                  <strong>${title}</strong>
+                  <span>${status}</span>
+                </div>
+                <p>${detail}</p>
+              </article>
+            `,
+          )
+          .join("")}
+        </div>
+      </section>
+
+      <section class="image-flow-panel">
+        <div class="section-title">
+          <i data-lucide="route"></i>
+          <h3>状态流转</h3>
+        </div>
+        <div class="image-status-flow">
+          <div><strong>待审核</strong><span>上传图片/文案/架构表</span></div>
+          <i data-lucide="arrow-right"></i>
+          <div><strong>审核通过</strong><span>生成合规提示词</span></div>
+          <i data-lucide="arrow-right"></i>
+          <div><strong>OpenAI Imagine</strong><span>生成图片</span></div>
+          <i data-lucide="arrow-right"></i>
+          <div><strong>可引用</strong><span>投手/剪辑使用</span></div>
+        </div>
+      </section>
     </div>
     <div class="action-strip">
-      <button class="quick-action" type="button"><i data-lucide="image-plus"></i> 新增生成需求</button>
-      <button class="quick-action" type="button"><i data-lucide="scan-eye"></i> 审核 AI 图</button>
-      <button class="quick-action" type="button"><i data-lucide="history"></i> 查看生成记录</button>
-      <button class="quick-action" type="button"><i data-lucide="link-2"></i> 管理引用状态</button>
+      <button class="quick-action" type="button"><i data-lucide="upload-cloud"></i> 上传审核材料</button>
+      <button class="quick-action" type="button"><i data-lucide="shield-check"></i> 运行合规审核</button>
+      <button class="quick-action" type="button"><i data-lucide="sparkles"></i> 审核通过后生图</button>
+      <button class="quick-action" type="button"><i data-lucide="download"></i> 导出成品图片</button>
     </div>
   `;
 }
