@@ -665,9 +665,28 @@ function renderBuyerDesk() {
     ["剪辑转交", "任务流转表", "待接"],
     ["发票异常", "财务台账", "待接"],
   ];
+  const processRows = [
+    ["充值检查", "低余额账户先确认是否充值到账", rechargeRows.length ? `${rechargeRows.length} 个待处理` : "暂无低余额"],
+    ["ROI 调控", "昨日 ROI 接入后生成预算/素材调整建议", "待同步"],
+    ["素材上传", "审核通过素材进入对应商品卡/切片账户", "待接"],
+    ["卡审转剪辑", "卡审不过的素材转给对应剪辑修改", "待接"],
+    ["日报沉淀", "账户动作、异常和结果写入日报", "待接"],
+  ];
   chartArea.innerHTML = `
     <div class="shooter-workbench">
       <section class="shooter-main">
+        <div class="admin-page-meta">
+          <div>
+            <span>内容创新部 / 投放业务</span>
+            <strong>投手每日处理中心</strong>
+          </div>
+          <div class="admin-meta-tags">
+            <span>真实账户底表已接入</span>
+            <span>千川日报待同步</span>
+            <span>素材流转待接</span>
+          </div>
+        </div>
+
         <div class="shooter-commandbar">
           <div class="buyer-segment" aria-label="切换投手">
             ${buyerProfiles
@@ -688,6 +707,43 @@ function renderBuyerDesk() {
           </div>
         </div>
 
+        <div class="admin-query-panel">
+          <label>
+            <span>账户关键词</span>
+            <input type="text" placeholder="账户名 / ID / 店铺 / 达人" />
+          </label>
+          <label>
+            <span>业务类型</span>
+            <select>
+              <option>全部</option>
+              <option>商品卡</option>
+              <option>切片</option>
+              <option>未归类</option>
+            </select>
+          </label>
+          <label>
+            <span>处理状态</span>
+            <select>
+              <option>全部状态</option>
+              <option>账户异常</option>
+              <option>待充值</option>
+              <option>待同步</option>
+            </select>
+          </label>
+          <label>
+            <span>数据来源</span>
+            <select>
+              <option>千川账户登记表</option>
+              <option>千川日报 待同步</option>
+              <option>素材审核表 待接</option>
+            </select>
+          </label>
+          <div class="query-actions">
+            <button class="ghost-button" type="button"><i data-lucide="search"></i> 查询</button>
+            <button class="ghost-button" type="button"><i data-lucide="rotate-ccw"></i> 重置</button>
+          </div>
+        </div>
+
         <div class="shooter-summary">
           <div><span>真实账户</span><strong>${stats.rows.length}</strong></div>
           <div><span>商品卡账户</span><strong>${productRows.length}</strong></div>
@@ -695,6 +751,13 @@ function renderBuyerDesk() {
           <div><span>账户异常</span><strong>${abnormalRows.length}</strong></div>
           <div><span>今日待充值</span><strong>${rechargeRows.length}</strong></div>
           <div><span>昨日 ROI</span><strong>待同步</strong></div>
+        </div>
+
+        <div class="business-object-row">
+          <article><i data-lucide="wallet-cards"></i><div><strong>千川账户</strong><span>账户状态、余额、用途、登记人</span></div></article>
+          <article><i data-lucide="badge-check"></i><div><strong>素材卡审</strong><span>通过、驳回、转剪辑、重新提审</span></div></article>
+          <article><i data-lucide="receipt-text"></i><div><strong>财务确认</strong><span>充值、挂账、发票异常提醒</span></div></article>
+          <article><i data-lucide="bar-chart-3"></i><div><strong>经营日报</strong><span>ROI、消耗、动作记录待同步</span></div></article>
         </div>
 
         <div class="shooter-tabs">
@@ -733,6 +796,26 @@ function renderBuyerDesk() {
             <div class="rail-task warning"><strong>充值检查</strong><span>${rechargeRows.length} 个余额低于 1000</span></div>
             <div class="rail-task"><strong>卡审转剪辑</strong><span>素材队列待接，先保留人工入口</span></div>
             <div class="rail-task"><strong>ROI 调控</strong><span>千川日报接入后自动生成</span></div>
+          </div>
+        </section>
+
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>业务流转</strong>
+            <span>员工动作链路</span>
+          </div>
+          <div class="process-list">
+            ${processRows
+              .map(
+                ([title, detail, status], index) => `
+                  <div class="process-row">
+                    <em>${index + 1}</em>
+                    <div><strong>${title}</strong><span>${detail}</span></div>
+                    <small>${status}</small>
+                  </div>
+                `,
+              )
+              .join("")}
           </div>
         </section>
 
@@ -1212,6 +1295,7 @@ function refreshIcons() {
 
 function render() {
   document.body.classList.toggle("electron-shell", isElectronShell);
+  document.body.classList.add("commercial-admin-mode");
   document.body.classList.toggle("buyer-erp-mode", activeModuleId === "buyerDesk");
   renderNav();
   renderMetrics();
