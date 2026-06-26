@@ -510,6 +510,37 @@ svg {
   gap: 14px;
 }
 
+.work-start-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.work-start-header > div:first-child {
+  display: grid;
+  gap: 6px;
+}
+
+.work-start-header span,
+.work-start-header p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.work-start-header h3 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.work-start-header p {
+  margin: 0;
+  line-height: 1.55;
+}
+
 .buyer-switch {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -566,6 +597,12 @@ svg {
   grid-column: 1 / -1;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.account-stats.compact {
+  align-content: start;
+  justify-content: flex-end;
+  max-width: 420px;
 }
 
 .account-stats span {
@@ -670,6 +707,194 @@ svg {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.work-queue-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.work-queue-card,
+.work-panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.work-queue-card {
+  display: grid;
+  gap: 12px;
+  min-height: 168px;
+  padding: 14px;
+}
+
+.work-queue-card.urgent {
+  border-color: rgba(191, 81, 72, 0.42);
+  background: #fff8f6;
+}
+
+.work-card-top,
+.work-card-bottom,
+.work-row,
+.handoff-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.work-card-top span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.work-card-top svg {
+  color: var(--accent-dark);
+}
+
+.work-card-top strong {
+  font-size: 30px;
+}
+
+.work-queue-card p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.work-card-bottom {
+  align-self: end;
+}
+
+.work-card-bottom small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.work-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 12px;
+}
+
+.work-main-grid.lower {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+}
+
+.work-panel {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 14px;
+}
+
+.handoff-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr) 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-soft);
+}
+
+.handoff-flow div {
+  display: grid;
+  gap: 4px;
+}
+
+.handoff-flow span,
+.handoff-row span,
+.work-row span,
+.automation-note span,
+.project-entry span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.handoff-flow svg {
+  color: var(--muted);
+}
+
+.handoff-list,
+.work-list {
+  display: grid;
+  gap: 10px;
+}
+
+.handoff-row,
+.work-row,
+.automation-note {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfdfd;
+}
+
+.handoff-row {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+}
+
+.work-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.work-row > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.empty-state {
+  padding: 18px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  background: #fbfdfd;
+  line-height: 1.55;
+}
+
+.project-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.project-entry {
+  display: grid;
+  gap: 6px;
+  min-height: 96px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  background: #fbfdfd;
+  text-align: left;
+}
+
+.project-entry:hover {
+  border-color: rgba(0, 168, 132, 0.42);
+  background: #effaf7;
+}
+
+.project-entry svg {
+  color: var(--accent-dark);
+}
+
+.automation-note {
+  display: grid;
+  gap: 7px;
+  min-height: 96px;
 }
 
 .section-title {
@@ -1125,6 +1350,9 @@ svg {
   .buyer-switch,
   .buyer-workflow,
   .daily-action-grid,
+  .work-queue-grid,
+  .work-main-grid,
+  .work-main-grid.lower,
   .ai-image-layout,
   .ai-image-grid,
   .integration-overview,
@@ -1164,8 +1392,16 @@ svg {
   .mini-cockpit,
   .account-board,
   .buyer-switch,
+  .work-start-header,
   .buyer-workflow,
   .daily-action-grid,
+  .work-queue-grid,
+  .work-main-grid,
+  .work-main-grid.lower,
+  .handoff-flow,
+  .handoff-row,
+  .work-row,
+  .project-entry-grid,
   .ai-image-layout,
   .ai-image-grid,
   .desk-summary,
@@ -1204,6 +1440,11 @@ svg {
   .panel-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .account-stats.compact {
+    justify-content: flex-start;
+    max-width: none;
   }
 
   .table-row {

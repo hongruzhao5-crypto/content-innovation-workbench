@@ -350,6 +350,9 @@ const pageTitle = document.querySelector("#pageTitle");
 const moduleTitle = document.querySelector("#moduleTitle");
 const moduleDescription = document.querySelector("#moduleDescription");
 const moduleStatus = document.querySelector("#moduleStatus");
+const metricGrid = document.querySelector(".metric-grid");
+const tablePanel = document.querySelector(".table-panel");
+const topbarAlertButton = document.querySelector(".topbar-actions .ghost-button");
 
 function getActiveModule() {
   return modules.find((item) => item.id === activeModuleId) || modules[0];
@@ -399,6 +402,18 @@ function getBuyerAccounts(buyerName, accountType) {
   return realAccountRows.filter((row) => row.登记人 === buyerName && row.账户类型 === accountType);
 }
 
+function getBuyerRows(buyerName) {
+  return realAccountRows.filter((row) => row.登记人 === buyerName);
+}
+
+function getAbnormalRows(rows) {
+  return rows.filter((row) => row.今日异常 !== "正常使用中");
+}
+
+function getRechargeRows(rows) {
+  return rows.filter((row) => Number(row.余额) >= 0 && Number(row.余额) < 1000);
+}
+
 function getBuyerStats(buyerName) {
   const rows = realAccountRows.filter((row) => row.登记人 === buyerName);
   const productCount = rows.filter((row) => row.账户类型 === "商品卡").length;
@@ -434,34 +449,75 @@ function renderAccountCards(rows, owner) {
     .join("");
 }
 
+function formatAccountName(row) {
+  return row.账户名称 || row.当前账户名称 || "未命名账户";
+}
+
+function uniqueRows(rows) {
+  const seen = new Set();
+  return rows.filter((row) => {
+    const key = row.账户ID || `${row.登记人}-${formatAccountName(row)}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function renderWorkQueueCard({ title, icon, count, meta, detail, button, tone = "" }) {
+  return `
+    <article class="work-queue-card ${tone}">
+      <div class="work-card-top">
+        <span><i data-lucide="${icon}"></i>${title}</span>
+        <strong>${count}</strong>
+      </div>
+      <p>${detail}</p>
+      <div class="work-card-bottom">
+        <small>${meta}</small>
+        <button class="mini-button" type="button">${button}</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderWorkRows(rows, emptyText) {
+  if (!rows.length) {
+    return `<div class="empty-state">${emptyText}</div>`;
+  }
+
+  return rows
+    .map(
+      (row) => `
+        <div class="work-row">
+          <div>
+            <strong>${formatAccountName(row)}</strong>
+            <span>${row.账户类型} / 余额 ${formatMoney(row.余额)} / ${row.账户状态}</span>
+          </div>
+          <div class="issue-tag">${row.今日异常}</div>
+          <button class="mini-button" type="button">处理</button>
+        </div>
+      `,
+    )
+    .join("");
+}
+
 function renderBuyerDesk() {
   const buyer = getActiveBuyer();
+  const rows = getBuyerRows(buyer.name);
   const stats = getBuyerStats(buyer.name);
-  const productAccounts = getBuyerAccounts(buyer.name, "商品卡");
-  const sliceAccounts = getBuyerAccounts(buyer.name, "切片");
-  const uncategorizedAccounts = getBuyerAccounts(buyer.name, "未归类");
+  const abnormalRows = getAbnormalRows(rows);
+  const rechargeRows = getRechargeRows(rows);
+  const actionRows = uniqueRows([...abnormalRows, ...rechargeRows]).slice(0, 10);
   chartArea.innerHTML = `
     <div class="buyer-desk-shell">
-      <div class="buyer-switch">
-        ${buyerProfiles
-          .map(
-            (item) => `
-              <button class="buyer-tab ${item.id === activeBuyerId ? "active" : ""}" type="button" data-buyer="${item.id}">
-                <strong>${item.name}</strong>
-                <span>${item.role}</span>
-              </button>
-            `,
-          )
-          .join("")}
-      </div>
-
-      <div class="desk-summary">
+      <div class="work-start-header">
         <div>
-          <span>当前投手</span>
-          <strong>${buyer.name}</strong>
+          <span>我的今日工作台</span>
+          <h3>${buyer.name}</h3>
+          <p>${buyer.today}</p>
         </div>
-        <p>${buyer.today}</p>
-        <div class="account-stats">
+        <div class="account-stats compact">
           <span>真实账户 ${stats.rows.length}</span>
           <span>商品卡 ${stats.productCount}</span>
           <span>切片 ${stats.sliceCount}</span>
@@ -469,89 +525,120 @@ function renderBuyerDesk() {
         </div>
       </div>
 
-      <div class="buyer-workflow">
-        <div class="project-column">
+      <div class="work-queue-grid">
+        ${renderWorkQueueCard({
+          title: "账户异常",
+          icon: "alert-triangle",
+          count: abnormalRows.length,
+          meta: "来自 WPS 千川账户登记表",
+          detail: "先处理异常、待注销、状态不清或备注待补的账户。",
+          button: "查看异常",
+          tone: abnormalRows.length ? "urgent" : "",
+        })}
+        ${renderWorkQueueCard({
+          title: "今日待充值",
+          icon: "wallet",
+          count: rechargeRows.length,
+          meta: "按余额低于 1000 初筛",
+          detail: "余额低的账户先确认是否需要充值、是否到账、是否影响投放。",
+          button: "处理充值",
+          tone: rechargeRows.length ? "urgent" : "",
+        })}
+        ${renderWorkQueueCard({
+          title: "昨日 ROI 异常",
+          icon: "line-chart",
+          count: "待接",
+          meta: "等待千川日报 / 飞书核算接入",
+          detail: "这里不编假数据；接入昨日投放数据后直接生成待调计划。",
+          button: "看接入状态",
+        })}
+        ${renderWorkQueueCard({
+          title: "我的今日任务",
+          icon: "list-checks",
+          count: buyerDailyActions.length,
+          meta: "按投手每日真实动作整理",
+          detail: "充值、上传、卡审、调控、素材分析、评论处理。",
+          button: "开始处理",
+        })}
+      </div>
+
+      <div class="work-main-grid">
+        <section class="work-panel">
+          <div class="section-title">
+            <i data-lucide="badge-check"></i>
+            <h3>卡审素材转剪辑</h3>
+          </div>
+          <div class="handoff-flow">
+            <div><strong>卡审不过</strong><span>待接素材审核结果</span></div>
+            <i data-lucide="arrow-right"></i>
+            <div><strong>转给剪辑</strong><span>按商品 / 账户 / 素材自动分派</span></div>
+            <i data-lucide="arrow-right"></i>
+            <div><strong>剪辑返回</strong><span>重新提审或上传账户</span></div>
+          </div>
+          <div class="handoff-list">
+            <div class="handoff-row">
+              <strong>商品卡素材</strong>
+              <span>待接卡审素材数据；当前只保留转交流程入口</span>
+              <button class="mini-button" type="button">转给剪辑</button>
+            </div>
+            <div class="handoff-row">
+              <strong>切片素材</strong>
+              <span>待接达人/切片素材审核结果；不在这里编造素材数</span>
+              <button class="mini-button" type="button">转给剪辑</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="work-panel">
+          <div class="section-title">
+            <i data-lucide="sliders-horizontal"></i>
+            <h3>账户调整队列</h3>
+          </div>
+          <div class="work-list">
+            ${renderWorkRows(actionRows, "当前没有从真实账户表筛出的异常/低余额账户。接入昨日 ROI 后，这里会变成待调整计划队列。")}
+          </div>
+        </section>
+      </div>
+
+      <div class="work-main-grid lower">
+        <section class="work-panel">
           <div class="section-title">
             <i data-lucide="folder-kanban"></i>
-            <h3>项目列</h3>
+            <h3>项目入口</h3>
           </div>
-          ${buyerProjectRows
-            .map(
-              (item) => `
-                <article class="project-card">
-                  <div>
+          <div class="project-entry-grid">
+            ${buyerProjectRows
+              .map(
+                (item) => `
+                  <button class="project-entry" type="button">
                     <i data-lucide="${item.icon}"></i>
                     <strong>${item.title}</strong>
-                  </div>
-                  <p>${item.detail}</p>
-                  <span>${item.target}</span>
-                </article>
-              `,
-            )
-            .join("")}
-        </div>
-
-        <div class="daily-action-panel">
-          <div class="section-title">
-            <i data-lucide="list-checks"></i>
-            <h3>今日 6 个真实操作入口</h3>
-          </div>
-          <div class="daily-action-grid">
-            ${buyerDailyActions
-              .map(
-                ([title, icon, detail]) => `
-                  <button class="daily-action" type="button">
-                    <i data-lucide="${icon}"></i>
-                    <strong>${title}</strong>
-                    <span>${detail}</span>
+                    <span>${item.target}</span>
                   </button>
                 `,
               )
               .join("")}
           </div>
-        </div>
+        </section>
+
+        <section class="work-panel">
+          <div class="section-title">
+            <i data-lucide="receipt-text"></i>
+            <h3>发票台账待确认</h3>
+          </div>
+          <div class="automation-note">
+            <strong>这里不让员工重复填台账。</strong>
+            <span>完整台账留在财务模块；投手只处理充值、发票、挂账里需要人工确认的异常。</span>
+          </div>
+        </section>
       </div>
 
-      <div class="account-section">
-        <div class="section-title">
-          <i data-lucide="shopping-bag"></i>
-          <h3>商品卡账户 ${productAccounts.length}</h3>
-        </div>
-        <div class="account-board compact-board">
-          ${renderAccountCards(productAccounts, buyer.name)}
-        </div>
+      <div class="action-strip">
+        <button class="quick-action" type="button"><i data-lucide="alert-triangle"></i> 处理异常</button>
+        <button class="quick-action" type="button"><i data-lucide="wallet"></i> 处理充值</button>
+        <button class="quick-action" type="button"><i data-lucide="badge-check"></i> 卡审转剪辑</button>
+        <button class="quick-action" type="button"><i data-lucide="sliders-horizontal"></i> 调整账户</button>
       </div>
-
-      <div class="account-section">
-        <div class="section-title">
-          <i data-lucide="clapperboard"></i>
-          <h3>切片账户 ${sliceAccounts.length}</h3>
-        </div>
-        <div class="account-board compact-board">
-          ${renderAccountCards(sliceAccounts, buyer.name)}
-        </div>
-      </div>
-      ${
-        uncategorizedAccounts.length
-          ? `
-            <div class="account-section">
-              <div class="section-title">
-                <i data-lucide="circle-help"></i>
-                <h3>未归类账户 ${uncategorizedAccounts.length}</h3>
-              </div>
-              <div class="account-board compact-board">
-                ${renderAccountCards(uncategorizedAccounts, buyer.name)}
-              </div>
-            </div>
-          `
-          : ""
-      }
-    </div>
-    <div class="action-strip">
-      <button class="quick-action" type="button"><i data-lucide="wallet"></i> 充值检查</button>
-      <button class="quick-action" type="button"><i data-lucide="upload-cloud"></i> 上传素材</button>
-      <button class="quick-action" type="button"><i data-lucide="sliders-horizontal"></i> 数据调控</button>
-      <button class="quick-action" type="button"><i data-lucide="message-square-x"></i> 评论处理</button>
     </div>
   `;
 }
@@ -787,7 +874,98 @@ function renderBackendData() {
   `;
 }
 
+function renderMetrics() {
+  if (!metricGrid) {
+    return;
+  }
+
+  if (activeModuleId === "buyerDesk") {
+    const buyer = getActiveBuyer();
+    const rows = getBuyerRows(buyer.name);
+    const abnormalRows = getAbnormalRows(rows);
+    const rechargeRows = getRechargeRows(rows);
+    const stats = getBuyerStats(buyer.name);
+    if (topbarAlertButton) {
+      topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>${abnormalRows.length} 个账户异常`;
+    }
+    metricGrid.innerHTML = `
+      <article class="metric-card">
+        <span>账户异常</span>
+        <strong>${abnormalRows.length}</strong>
+        <small class="${abnormalRows.length ? "down" : "up"}">${buyer.name} 今日先处理</small>
+      </article>
+      <article class="metric-card">
+        <span>今日待充值</span>
+        <strong>${rechargeRows.length}</strong>
+        <small>余额低于 1000 的真实账户</small>
+      </article>
+      <article class="metric-card">
+        <span>昨日 ROI 异常</span>
+        <strong>待接</strong>
+        <small>不编假数据，等千川日报接入</small>
+      </article>
+      <article class="metric-card">
+        <span>我的账户</span>
+        <strong>${stats.rows.length}</strong>
+        <small>商品卡 ${stats.productCount} / 切片 ${stats.sliceCount}</small>
+      </article>
+    `;
+    return;
+  }
+
+  if (topbarAlertButton) {
+    topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>待接入提醒`;
+  }
+
+  metricGrid.innerHTML = `
+    <article class="metric-card">
+      <span>投手待调账户</span>
+      <strong>待接</strong>
+      <small>等待千川日报接入</small>
+    </article>
+    <article class="metric-card">
+      <span>剪辑待交付</span>
+      <strong>待接</strong>
+      <small>等待任务表接入</small>
+    </article>
+    <article class="metric-card">
+      <span>卡审素材</span>
+      <strong>待接</strong>
+      <small>等待素材审核结果接入</small>
+    </article>
+    <article class="metric-card">
+      <span>台账核算</span>
+      <strong>待接</strong>
+      <small>等待财务台账自动化接入</small>
+    </article>
+  `;
+}
+
 function renderTodos() {
+  if (activeModuleId === "buyerDesk") {
+    const buyer = getActiveBuyer();
+    const rows = getBuyerRows(buyer.name);
+    const abnormalRows = getAbnormalRows(rows);
+    const rechargeRows = getRechargeRows(rows);
+    todoList.innerHTML = [
+      [`先处理账户异常`, `${buyer.name} / ${abnormalRows.length} 个真实账户异常或待补`],
+      [`确认今日充值`, `${buyer.name} / ${rechargeRows.length} 个低余额账户需确认`],
+      [`卡审素材转剪辑`, `素材数据待接入；当前先跑转交流程`],
+      [`账户调整`, `昨日 ROI 接入后生成待调计划，不在这里编假数`],
+      [`发票台账`, `只处理待确认异常，完整台账进财务模块`],
+    ]
+      .map(
+        ([title, detail]) => `
+          <div class="todo-item">
+            <strong>${title}</strong>
+            <span>${detail}</span>
+          </div>
+        `,
+      )
+      .join("");
+    return;
+  }
+
   todoList.innerHTML = todos
     .map(
       ([title, detail]) => `
@@ -801,6 +979,15 @@ function renderTodos() {
 }
 
 function renderTable() {
+  if (tablePanel) {
+    tablePanel.classList.toggle("hidden", activeModuleId === "buyerDesk");
+  }
+
+  if (activeModuleId === "buyerDesk") {
+    operationTable.innerHTML = "";
+    return;
+  }
+
   const rows = modules.filter((item) => activeFilter === "all" || priorityKey(item.priority) === activeFilter);
 
   operationTable.innerHTML = `
@@ -843,6 +1030,7 @@ function refreshIcons() {
 
 function render() {
   renderNav();
+  renderMetrics();
   if (activeModuleId === "buyerDesk") {
     renderBuyerDesk();
   } else if (activeModuleId === "editorDesk") {
