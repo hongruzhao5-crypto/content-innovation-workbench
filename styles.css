@@ -2146,3 +2146,123 @@ svg {
     border-bottom: 0;
   }
 }
+
+/* Strong admin skin override: Ant Design / TDesign style */
+body {
+  color: #1f2329 !important;
+  background: #f5f7fa !important;
+}
+
+.erp-view {
+  background: #f5f7fa !important;
+}
+
+.sidebar {
+  background: #001529 !important;
+  color: #ffffff !important;
+}
+
+.app-mark {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #1677ff, #14c9c9) !important;
+}
+
+.nav-item {
+  border-radius: 6px !important;
+  color: rgba(255, 255, 255, 0.68) !important;
+  background: transparent !important;
+}
+
+.nav-item.active,
+.nav-item:hover {
+  color: #ffffff !important;
+  background: #1677ff !important;
+}
+
+.primary-button {
+  color: #ffffff !important;
+  background: #1677ff !important;
+}
+
+.primary-button:hover {
+  background: #165dff !important;
+}
+
+.ghost-button,
+.mini-button,
+.icon-button,
+.quick-action {
+  border-color: #d9dce3 !important;
+  border-radius: 4px !important;
+  color: #1f2329 !important;
+  background: #ffffff !important;
+}
+
+.ghost-button:hover,
+.mini-button:hover,
+.icon-button:hover,
+.quick-action:hover {
+  border-color: #91caff !important;
+  color: #165dff !important;
+  background: #f0f7ff !important;
+}
+
+.buyer-erp-mode .workspace {
+  background: #f5f7fa !important;
+}
+
+.buyer-erp-mode .topbar,
+.buyer-erp-mode .main-panel > .panel-header,
+.erp-filter-bar,
+.erp-summary-strip,
+.erp-tabs,
+.erp-dense-panel,
+.erp-process-card {
+  border: 1px solid #e5e6eb !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(29, 41, 57, 0.05) !important;
+}
+
+.erp-system-header {
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: linear-gradient(90deg, #165dff 0%, #1677ff 58%, #14c9c9 100%) !important;
+  box-shadow: 0 8px 22px rgba(22, 93, 255, 0.22) !important;
+}
+
+.erp-tab.active,
+.erp-tab:hover {
+  color: #ffffff !important;
+  background: #1677ff !important;
+}
+
+.erp-table-row.header {
+  color: #4e5969 !important;
+  background: #f2f3f5 !important;
+}
+
+.erp-table-row:nth-child(odd):not(.header) {
+  background: #fbfcff !important;
+}
+
+.erp-table-row:not(.header):hover {
+  background: #f0f7ff !important;
+}
+
+.priority-badge.p0,
+.state-tag.warning {
+  color: #f53f3f !important;
+  background: #ffece8 !important;
+}
+
+.priority-badge.p1 {
+  color: #ff7d00 !important;
+  background: #fff7e8 !important;
+}
+
+.priority-badge.p2,
+.state-tag {
+  color: #4e5969 !important;
+  background: #f2f3f5 !important;
+}
