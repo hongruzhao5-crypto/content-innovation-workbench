@@ -138,10 +138,10 @@ const modules = [
     icon: "database-zap",
     priority: "P0",
     status: "接入层",
-    description: "把飞书文档和 WPS 在线表格作为正式数据源，无缝同步到投手、财务、报表和经营驾驶舱。",
+    description: "优先通过内置浏览器自动采集千川后台、截图识别和规则抽取生成任务；飞书/WPS 只作为历史底表和兜底数据源。",
     owner: "系统 / 运营",
-    next: "完成飞书授权和字段映射",
-    actions: ["接飞书接口", "配置 WPS", "映射字段", "同步到底表"],
+    next: "先打通内置浏览器采集规则，再补飞书/WPS字段映射",
+    actions: ["打开后台采集", "截图识别", "抽取字段", "推送任务"],
   },
   {
     id: "system",
@@ -336,30 +336,41 @@ const dataSourceRows = [
     next: "已读取台账结构和达人昵称库",
   },
   {
+    name: "千川后台账户状态自动采集",
+    platform: "内置浏览器 / 截图识别",
+    status: "设计主链路",
+    owner: "投手组 / 财务",
+    sync: "员工打开账户时自动截图、识别余额/状态/ROI/卡审提示",
+    feeds: "投手工作台 / 账户中心 / 财务模块",
+    fields: ["账户名", "余额", "账户状态", "ROI", "卡审提示", "低质搬运"],
+    targetTable: "账户实时状态表",
+    next: "配置截图区域和字段抽取规则",
+  },
+  {
     name: "抖音千川账户登记表3.13",
     platform: "WPS / 金山文档",
-    status: "已读取 99 条",
+    status: "历史底表",
     owner: "投手组 / 财务",
-    sync: "当前下载文件 / 后续在线同步",
+    sync: "当前下载文件 / 后续仅作账户归属兜底",
     feeds: "投手工作台 / 账户中心 / 财务模块",
     fields: ["账号名", "登记人", "项目", "商品卡/切片", "充值", "开票"],
-    targetTable: "投手账户底表",
-    next: "已按登记人和项目生成投手账户底表",
+    targetTable: "账户归属底表",
+    next: "不作为日常工作主数据入口",
   },
 ];
 
 const fieldMappingRows = [
-  ["WPS 千川账户登记表", "登记人", "投手账户底表.投手", "已映射"],
-  ["WPS 千川账户登记表", "项目", "投手账户底表.账户类型", "已映射"],
-  ["WPS 千川账户登记表", "账号名 / 账户ID", "投手账户底表.账户", "已映射"],
-  ["WPS 千川账户登记表", "账户状态 / 余额 / 备注", "投手工作台.异常提示", "已映射"],
+  ["内置浏览器 千川后台", "余额 / 状态 / ROI / 卡审提示", "投手工作台.今日任务", "待配置规则"],
+  ["内置浏览器 千川后台", "卡审失败素材 / 低质搬运", "素材中心.卡审转交", "待配置规则"],
+  ["内置浏览器 千川后台", "截图 / 页面文本 / 操作结果", "自动化中心.采集日志", "待配置规则"],
+  ["WPS 千川账户登记表", "登记人 / 项目 / 账户ID", "账户归属底表", "历史兜底"],
   ["飞书 商品卡核算", "核算批次 / 店铺明细JSON / 核算时间 / GSV ROI", "商品卡核算表", "已识别"],
   ["飞书 切片核算", "源文件 / 核算结果 / 运营人业绩 / 达人业绩", "切片核算表", "已识别"],
   ["飞书 璟美空间检查分析", "文件夹 / 总控看板 / 周报监控表", "异常检查表", "已识别"],
 ];
 
 const syncRuleRows = [
-  ["P0", "WPS 千川账户登记表", "手动下载更新", "投手账户底表", "已接入"],
+  ["P0", "内置浏览器 千川后台", "打开账户自动采集", "账户实时状态 / 今日任务", "待接"],
   ["P1", "飞书 商品卡核算", "每日 9:30 同步", "商品卡日报 / 财务台账", "待接口"],
   ["P1", "飞书 切片核算", "每日 9:30 同步", "切片日报 / 财务台账", "待接口"],
   ["P2", "飞书 璟美空间检查分析", "每 2 小时同步", "异常中心 / 驾驶舱", "待接口"],
@@ -660,17 +671,18 @@ function renderBuyerDesk() {
   const productRows = getBuyerAccounts(buyer.name, "商品卡");
   const sliceRows = getBuyerAccounts(buyer.name, "切片");
   const pendingSyncRows = [
-    ["昨日 ROI", "千川日报", "待同步"],
-    ["卡审素材", "素材审核表", "待接"],
-    ["剪辑转交", "任务流转表", "待接"],
+    ["昨日 ROI", "内置浏览器逐账户采集", "待接"],
+    ["账户状态", "千川后台自动截图识别", "待接"],
+    ["卡审素材", "识别后推送投手+剪辑", "待接"],
+    ["剪辑转交", "卡审问题自动生成修改任务", "待接"],
     ["发票异常", "财务台账", "待接"],
   ];
   const processRows = [
-    ["充值检查", "低余额账户先确认是否充值到账", rechargeRows.length ? `${rechargeRows.length} 个待处理` : "暂无低余额"],
-    ["ROI 调控", "昨日 ROI 接入后生成预算/素材调整建议", "待同步"],
-    ["素材上传", "审核通过素材进入对应商品卡/切片账户", "待接"],
-    ["卡审转剪辑", "卡审不过的素材转给对应剪辑修改", "待接"],
-    ["日报沉淀", "账户动作、异常和结果写入日报", "待接"],
+    ["自动巡检账户", "内置浏览器挨个打开账户，截图并抽取余额、状态、ROI、卡审提示", "待接"],
+    ["推送投手任务", "账户异常、低余额、ROI 异常自动推给对应投手", rechargeRows.length ? `${rechargeRows.length} 个待处理` : "暂无低余额"],
+    ["卡审同步剪辑", "卡审不过的素材同时推给投手和对应剪辑，形成修改任务", "待接"],
+    ["员工操作采集", "投手在内置浏览器操作时，系统记录打开账户、提审、删除、上传等动作", "待接"],
+    ["日报沉淀", "账户动作、异常、截图和处理结果自动写入日报", "待接"],
   ];
   chartArea.innerHTML = `
     <div class="shooter-workbench">
@@ -681,9 +693,9 @@ function renderBuyerDesk() {
             <strong>投手每日处理中心</strong>
           </div>
           <div class="admin-meta-tags">
-            <span>真实账户底表已接入</span>
-            <span>千川日报待同步</span>
-            <span>素材流转待接</span>
+            <span>内置浏览器采集优先</span>
+            <span>人工表格仅兜底</span>
+            <span>卡审同步投手+剪辑</span>
           </div>
         </div>
 
@@ -733,9 +745,9 @@ function renderBuyerDesk() {
           <label>
             <span>数据来源</span>
             <select>
-              <option>千川账户登记表</option>
-              <option>千川日报 待同步</option>
-              <option>素材审核表 待接</option>
+              <option>内置浏览器自动采集</option>
+              <option>千川后台截图识别 待接</option>
+              <option>历史账户登记表 兜底</option>
             </select>
           </label>
           <div class="query-actions">
@@ -754,10 +766,10 @@ function renderBuyerDesk() {
         </div>
 
         <div class="business-object-row">
-          <article><i data-lucide="wallet-cards"></i><div><strong>千川账户</strong><span>账户状态、余额、用途、登记人</span></div></article>
-          <article><i data-lucide="badge-check"></i><div><strong>素材卡审</strong><span>通过、驳回、转剪辑、重新提审</span></div></article>
-          <article><i data-lucide="receipt-text"></i><div><strong>财务确认</strong><span>充值、挂账、发票异常提醒</span></div></article>
-          <article><i data-lucide="bar-chart-3"></i><div><strong>经营日报</strong><span>ROI、消耗、动作记录待同步</span></div></article>
+          <article><i data-lucide="wallet-cards"></i><div><strong>千川账户</strong><span>自动采集余额、状态、低质搬运、登录异常</span></div></article>
+          <article><i data-lucide="badge-check"></i><div><strong>素材卡审</strong><span>识别驳回原因后同步投手和对应剪辑</span></div></article>
+          <article><i data-lucide="receipt-text"></i><div><strong>财务确认</strong><span>低余额、充值到账、挂账和发票异常提醒</span></div></article>
+          <article><i data-lucide="bar-chart-3"></i><div><strong>经营日报</strong><span>ROI、消耗、截图和动作记录自动沉淀</span></div></article>
         </div>
 
         <div class="shooter-tabs">
@@ -772,8 +784,8 @@ function renderBuyerDesk() {
         <section class="worktable-panel">
           <div class="erp-panel-title">
             <div>
-              <h3>${buyer.name}的今日账户处理表</h3>
-              <p>基于真实千川账户登记表生成；未接入字段统一显示待同步。</p>
+            <h3>${buyer.name}的今日账户处理表</h3>
+              <p>当前用历史账户底表兜底展示；正式链路应由内置浏览器自动采集千川后台后生成。</p>
             </div>
             <div class="erp-batch-actions">
               <button class="mini-button" type="button">标记已看</button>
@@ -794,8 +806,8 @@ function renderBuyerDesk() {
           <div class="rail-task-list">
             <div class="rail-task danger"><strong>账户异常</strong><span>${abnormalRows.length} 个需要先核对状态</span></div>
             <div class="rail-task warning"><strong>充值检查</strong><span>${rechargeRows.length} 个余额低于 1000</span></div>
-            <div class="rail-task"><strong>卡审转剪辑</strong><span>素材队列待接，先保留人工入口</span></div>
-            <div class="rail-task"><strong>ROI 调控</strong><span>千川日报接入后自动生成</span></div>
+            <div class="rail-task"><strong>卡审转剪辑</strong><span>采集到卡审失败后同步推送给投手和剪辑</span></div>
+            <div class="rail-task"><strong>ROI 调控</strong><span>内置浏览器逐账户采集后自动生成</span></div>
           </div>
         </section>
 
@@ -822,7 +834,7 @@ function renderBuyerDesk() {
         <section class="rail-panel">
           <div class="rail-title">
             <strong>数据同步</strong>
-            <span>不造假数</span>
+            <span>自动采集优先</span>
           </div>
           <div class="sync-list">
             ${pendingSyncRows
@@ -841,13 +853,13 @@ function renderBuyerDesk() {
         <section class="rail-panel">
           <div class="rail-title">
             <strong>后台工作区</strong>
-            <span>桌面端复用登录</span>
+            <span>打开即采集</span>
           </div>
           <div class="browser-lite">
             <i data-lucide="monitor-up"></i>
             <div>
               <strong>${activeBrowserAccountKey ? "已选择账户" : "未选择账户"}</strong>
-              <span>${activeBrowserAccountKey ? "准备打开千川后台" : "从表格点击打开后台"}</span>
+              <span>${activeBrowserAccountKey ? "准备打开并采集千川后台" : "从表格点击打开后台，未来自动截图识别"}</span>
             </div>
           </div>
         </section>
