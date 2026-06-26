@@ -549,6 +549,67 @@ function renderWorkRows(rows, emptyText) {
     .join("");
 }
 
+function getBuyerWorkRows(buyerName) {
+  const rows = getBuyerRows(buyerName);
+  const abnormalRows = getAbnormalRows(rows);
+  const rechargeRows = getRechargeRows(rows);
+  const selected = uniqueRows([...abnormalRows, ...rechargeRows, ...rows]).slice(0, 14);
+
+  return selected.map((row, index) => {
+    const balance = Number(row.余额);
+    const isLowBalance = Number.isFinite(balance) && balance < 1000;
+    const isAbnormal = row.今日异常 !== "正常使用中";
+    const priority = isAbnormal ? "P0" : isLowBalance ? "P1" : "P2";
+    const nextAction = isAbnormal
+      ? "先核对账户状态"
+      : isLowBalance
+        ? "确认是否充值"
+        : index % 3 === 0
+          ? "等待昨日 ROI"
+          : "例行巡检";
+    return { ...row, priority, isLowBalance, isAbnormal, nextAction };
+  });
+}
+
+function renderBuyerERPTable(rows) {
+  return `
+    <div class="erp-work-table">
+      <div class="erp-table-row header">
+        <div>优先级</div>
+        <div>账户</div>
+        <div>项目</div>
+        <div>余额</div>
+        <div>账户状态</div>
+        <div>昨日 ROI</div>
+        <div>当前动作</div>
+        <div>操作</div>
+      </div>
+      ${rows
+        .map(
+          (row) => `
+            <div class="erp-table-row">
+              <div><span class="priority-badge ${row.priority.toLowerCase()}">${row.priority}</span></div>
+              <div>
+                <strong>${formatAccountName(row)}</strong>
+                <small>${row.账户ID || "无账户ID"}</small>
+              </div>
+              <div>${row.账户类型} / ${row.项目}</div>
+              <div>${formatMoney(row.余额)}</div>
+              <div><span class="state-tag ${row.isAbnormal ? "warning" : ""}">${row.今日异常}</span></div>
+              <div>待接</div>
+              <div>${row.nextAction}</div>
+              <div class="erp-row-actions">
+                <button class="mini-button" type="button" data-open-account="${getAccountKey(row)}">打开后台</button>
+                <button class="mini-button" type="button">记录</button>
+              </div>
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
 function renderEmbeddedBrowserPanel(rows) {
   const selectedAccount = findAccountByKey(activeBrowserAccountKey) || rows[0] || null;
   const selectedName = selectedAccount ? formatAccountName(selectedAccount) : "未选择账户";
@@ -595,139 +656,112 @@ function renderBuyerDesk() {
   const stats = getBuyerStats(buyer.name);
   const abnormalRows = getAbnormalRows(rows);
   const rechargeRows = getRechargeRows(rows);
-  const actionRows = uniqueRows([...abnormalRows, ...rechargeRows]).slice(0, 10);
+  const workRows = getBuyerWorkRows(buyer.name);
   chartArea.innerHTML = `
-    <div class="buyer-desk-shell">
-      <div class="work-start-header">
-        <div>
-          <span>我的今日工作台</span>
-          <h3>${buyer.name}</h3>
-          <p>${buyer.today}</p>
+    <div class="erp-workbench">
+      <div class="erp-filter-bar">
+        <div class="erp-filter-left">
+          <label>
+            <span>账户搜索</span>
+            <input type="text" value="" placeholder="账户名 / ID / 项目" />
+          </label>
+          <label>
+            <span>项目</span>
+            <select>
+              <option>全部项目</option>
+              <option>商品卡</option>
+              <option>切片</option>
+              <option>素材审核</option>
+            </select>
+          </label>
+          <label>
+            <span>状态</span>
+            <select>
+              <option>全部状态</option>
+              <option>异常优先</option>
+              <option>待充值</option>
+              <option>待调整</option>
+            </select>
+          </label>
         </div>
-        <div class="account-stats compact">
-          <span>真实账户 ${stats.rows.length}</span>
-          <span>商品卡 ${stats.productCount}</span>
-          <span>切片 ${stats.sliceCount}</span>
-          <span>异常/待补 ${stats.abnormalCount}</span>
+        <div class="erp-filter-actions">
+          <button class="ghost-button" type="button"><i data-lucide="search"></i> 查询</button>
+          <button class="ghost-button" type="button"><i data-lucide="rotate-ccw"></i> 重置</button>
+          <button class="primary-button" type="button"><i data-lucide="download"></i> 导出</button>
         </div>
       </div>
 
-      <div class="work-queue-grid">
-        ${renderWorkQueueCard({
-          title: "账户异常",
-          icon: "alert-triangle",
-          count: abnormalRows.length,
-          meta: "来自 WPS 千川账户登记表",
-          detail: "先处理异常、待注销、状态不清或备注待补的账户。",
-          button: "查看异常",
-          tone: abnormalRows.length ? "urgent" : "",
-        })}
-        ${renderWorkQueueCard({
-          title: "今日待充值",
-          icon: "wallet",
-          count: rechargeRows.length,
-          meta: "按余额低于 1000 初筛",
-          detail: "余额低的账户先确认是否需要充值、是否到账、是否影响投放。",
-          button: "处理充值",
-          tone: rechargeRows.length ? "urgent" : "",
-        })}
-        ${renderWorkQueueCard({
-          title: "昨日 ROI 异常",
-          icon: "line-chart",
-          count: "待接",
-          meta: "等待千川日报 / 飞书核算接入",
-          detail: "这里不编假数据；接入昨日投放数据后直接生成待调计划。",
-          button: "看接入状态",
-        })}
-        ${renderWorkQueueCard({
-          title: "我的今日任务",
-          icon: "list-checks",
-          count: buyerDailyActions.length,
-          meta: "按投手每日真实动作整理",
-          detail: "充值、上传、卡审、调控、素材分析、评论处理。",
-          button: "开始处理",
-        })}
+      <div class="erp-summary-strip">
+        <div><span>当前员工</span><strong>${buyer.name}</strong></div>
+        <div><span>真实账户</span><strong>${stats.rows.length}</strong></div>
+        <div><span>账户异常</span><strong>${abnormalRows.length}</strong></div>
+        <div><span>今日待充值</span><strong>${rechargeRows.length}</strong></div>
+        <div><span>昨日 ROI 异常</span><strong>待接</strong></div>
+        <div><span>待转剪辑</span><strong>待接</strong></div>
       </div>
 
-      <div class="work-main-grid">
-        <section class="work-panel">
-          <div class="section-title">
-            <i data-lucide="badge-check"></i>
-            <h3>卡审素材转剪辑</h3>
-          </div>
-          <div class="handoff-flow">
-            <div><strong>卡审不过</strong><span>待接素材审核结果</span></div>
-            <i data-lucide="arrow-right"></i>
-            <div><strong>转给剪辑</strong><span>按商品 / 账户 / 素材自动分派</span></div>
-            <i data-lucide="arrow-right"></i>
-            <div><strong>剪辑返回</strong><span>重新提审或上传账户</span></div>
-          </div>
-          <div class="handoff-list">
-            <div class="handoff-row">
-              <strong>商品卡素材</strong>
-              <span>待接卡审素材数据；当前只保留转交流程入口</span>
-              <button class="mini-button" type="button">转给剪辑</button>
-            </div>
-            <div class="handoff-row">
-              <strong>切片素材</strong>
-              <span>待接达人/切片素材审核结果；不在这里编造素材数</span>
-              <button class="mini-button" type="button">转给剪辑</button>
-            </div>
-          </div>
-        </section>
+      <div class="erp-tabs">
+        <button class="erp-tab active" type="button">今日待处理</button>
+        <button class="erp-tab" type="button">账户管理</button>
+        <button class="erp-tab" type="button">计划管理</button>
+        <button class="erp-tab" type="button">素材审核</button>
+        <button class="erp-tab" type="button">卡审处理</button>
+        <button class="erp-tab" type="button">财务待确认</button>
+      </div>
 
-        <section class="work-panel">
-          <div class="section-title">
-            <i data-lucide="sliders-horizontal"></i>
-            <h3>账户调整队列</h3>
+      <section class="erp-dense-panel">
+        <div class="erp-panel-title">
+          <div>
+            <h3>今日账户处理表</h3>
+            <p>按国内电商 ERP / 投放后台方式组织：先筛选，再看状态，再批量处理。</p>
           </div>
-          <div class="work-list">
-            ${renderWorkRows(actionRows, "当前没有从真实账户表筛出的异常/低余额账户。接入昨日 ROI 后，这里会变成待调整计划队列。")}
+          <div class="erp-batch-actions">
+            <button class="mini-button" type="button">批量标记已看</button>
+            <button class="mini-button" type="button">批量转剪辑</button>
+            <button class="mini-button" type="button">批量生成日报</button>
           </div>
+        </div>
+        ${renderBuyerERPTable(workRows)}
+      </section>
+
+      <div class="erp-process-grid">
+        <section class="erp-process-card">
+          <div><i data-lucide="badge-check"></i><strong>卡审处理</strong></div>
+          <p>卡审不过的素材进入这里，直接转给对应剪辑，返回后重新提审。</p>
+          <button class="mini-button" type="button">查看卡审队列</button>
+        </section>
+        <section class="erp-process-card">
+          <div><i data-lucide="upload-cloud"></i><strong>素材上传</strong></div>
+          <p>审核通过素材按账户/项目进入待上传列表，减少投手自己找素材。</p>
+          <button class="mini-button" type="button">查看待上传</button>
+        </section>
+        <section class="erp-process-card">
+          <div><i data-lucide="receipt-text"></i><strong>发票台账</strong></div>
+          <p>完整台账留在财务模块，投手只处理需要人工确认的充值、发票、挂账异常。</p>
+          <button class="mini-button" type="button">查看待确认</button>
+        </section>
+        <section class="erp-process-card">
+          <div><i data-lucide="workflow"></i><strong>自动化状态</strong></div>
+          <p>日报、ROI、卡审素材、财务核算接入后，统一在这里看同步状态。</p>
+          <button class="mini-button" type="button">查看执行日志</button>
         </section>
       </div>
 
-      ${renderEmbeddedBrowserPanel(actionRows)}
-
-      <div class="work-main-grid lower">
-        <section class="work-panel">
-          <div class="section-title">
-            <i data-lucide="folder-kanban"></i>
-            <h3>项目入口</h3>
+      <section class="erp-dense-panel">
+        <div class="erp-panel-title">
+          <div>
+            <h3>后台登录工作区</h3>
+            <p>表格点击“打开后台”后，桌面端会在内置浏览器复用登录状态；公网版只展示流程。</p>
           </div>
-          <div class="project-entry-grid">
-            ${buyerProjectRows
-              .map(
-                (item) => `
-                  <button class="project-entry" type="button">
-                    <i data-lucide="${item.icon}"></i>
-                    <strong>${item.title}</strong>
-                    <span>${item.target}</span>
-                  </button>
-                `,
-              )
-              .join("")}
+        </div>
+        <div class="erp-browser-lite">
+          <div>
+            <strong>${activeBrowserAccountKey ? "已选择账户" : "未选择账户"}</strong>
+            <span>${activeBrowserAccountKey ? "准备打开千川后台" : "请先在上方账户表点击打开后台"}</span>
           </div>
-        </section>
-
-        <section class="work-panel">
-          <div class="section-title">
-            <i data-lucide="receipt-text"></i>
-            <h3>发票台账待确认</h3>
-          </div>
-          <div class="automation-note">
-            <strong>这里不让员工重复填台账。</strong>
-            <span>完整台账留在财务模块；投手只处理充值、发票、挂账里需要人工确认的异常。</span>
-          </div>
-        </section>
-      </div>
-
-      <div class="action-strip">
-        <button class="quick-action" type="button"><i data-lucide="alert-triangle"></i> 处理异常</button>
-        <button class="quick-action" type="button"><i data-lucide="wallet"></i> 处理充值</button>
-        <button class="quick-action" type="button"><i data-lucide="badge-check"></i> 卡审转剪辑</button>
-        <button class="quick-action" type="button"><i data-lucide="sliders-horizontal"></i> 调整账户</button>
-      </div>
+          <button class="mini-button" type="button">内置浏览器</button>
+        </div>
+      </section>
     </div>
   `;
 }
