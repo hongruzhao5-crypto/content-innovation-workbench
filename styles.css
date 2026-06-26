@@ -527,6 +527,103 @@ svg {
   gap: 10px;
 }
 
+.buyer-erp-mode .workspace {
+  padding: 14px;
+  background: #e9eef1;
+}
+
+.buyer-erp-mode .topbar {
+  min-height: 52px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid #cfd8dc;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.buyer-erp-mode .topbar h1 {
+  font-size: 22px;
+}
+
+.buyer-erp-mode .eyebrow {
+  color: #62727a;
+}
+
+.buyer-erp-mode .metric-grid,
+.buyer-erp-mode .side-panel,
+.buyer-erp-mode .table-panel {
+  display: none;
+}
+
+.buyer-erp-mode .dashboard-grid {
+  display: block;
+}
+
+.buyer-erp-mode .main-panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.buyer-erp-mode .main-panel > .panel-header {
+  align-items: center;
+  min-height: 54px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid #cfd8dc;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.buyer-erp-mode .main-panel > .panel-header h2 {
+  font-size: 18px;
+}
+
+.buyer-erp-mode .main-panel > .panel-header p {
+  font-size: 12px;
+}
+
+.erp-system-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid #b8c6cc;
+  border-radius: 6px;
+  color: #ffffff;
+  background: #1f4e5f;
+}
+
+.erp-system-header span,
+.erp-system-header strong {
+  display: block;
+}
+
+.erp-system-header span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+}
+
+.erp-system-header strong {
+  margin-top: 2px;
+  font-size: 18px;
+}
+
+.erp-system-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.erp-system-actions .mini-button {
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .erp-filter-bar {
   display: flex;
   align-items: end;
@@ -534,7 +631,7 @@ svg {
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   background: #ffffff;
 }
 
@@ -576,7 +673,7 @@ svg {
   grid-template-columns: repeat(6, minmax(0, 1fr));
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   background: #ffffff;
 }
 
@@ -607,7 +704,7 @@ svg {
   gap: 4px;
   padding: 4px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   background: #ffffff;
 }
 
@@ -632,7 +729,7 @@ svg {
   gap: 10px;
   padding: 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   background: #ffffff;
 }
 
@@ -661,7 +758,7 @@ svg {
 .erp-work-table {
   overflow-x: auto;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
 .erp-table-row {
@@ -672,14 +769,22 @@ svg {
   background: #ffffff;
 }
 
+.erp-table-row:nth-child(odd):not(.header) {
+  background: #fbfcfc;
+}
+
+.erp-table-row:not(.header):hover {
+  background: #edf7f4;
+}
+
 .erp-table-row:last-child {
   border-bottom: 0;
 }
 
 .erp-table-row.header {
   min-height: 40px;
-  color: var(--muted);
-  background: var(--panel-soft);
+  color: #31464f;
+  background: #dfe8eb;
   font-size: 12px;
   font-weight: 850;
 }
@@ -692,6 +797,18 @@ svg {
   padding: 8px 10px;
   border-right: 1px solid var(--line);
   font-size: 12px;
+}
+
+.buyer-erp-mode .mini-button,
+.buyer-erp-mode .ghost-button,
+.buyer-erp-mode .primary-button {
+  min-height: 32px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.buyer-erp-mode .status-pill {
+  border-radius: 4px;
 }
 
 .erp-table-row > div:last-child {
@@ -752,7 +869,7 @@ svg {
   min-height: 142px;
   padding: 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   background: #ffffff;
 }
 

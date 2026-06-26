@@ -659,6 +659,18 @@ function renderBuyerDesk() {
   const workRows = getBuyerWorkRows(buyer.name);
   chartArea.innerHTML = `
     <div class="erp-workbench">
+      <div class="erp-system-header">
+        <div>
+          <span>投手作战 ERP 表格版</span>
+          <strong>今日处理中心</strong>
+        </div>
+        <div class="erp-system-actions">
+          <button class="mini-button" type="button">刷新数据</button>
+          <button class="mini-button" type="button">同步千川</button>
+          <button class="mini-button" type="button">导入账户表</button>
+        </div>
+      </div>
+
       <div class="erp-filter-bar">
         <div class="erp-filter-left">
           <label>
@@ -1205,6 +1217,7 @@ function refreshIcons() {
 
 function render() {
   document.body.classList.toggle("electron-shell", isElectronShell);
+  document.body.classList.toggle("buyer-erp-mode", activeModuleId === "buyerDesk");
   renderNav();
   renderMetrics();
   if (activeModuleId === "buyerDesk") {
