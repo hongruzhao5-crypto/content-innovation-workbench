@@ -18,10 +18,10 @@ const modules = [
     icon: "scissors",
     priority: "P0",
     status: "新增",
-    description: "剪辑每天的主入口，集中处理精剪任务、网络素材收集、素材上传、投手反馈修改和拍摄任务。",
+    description: "剪辑每天的主入口，只处理卡审修改、素材剪辑数量、绿联云盘上传进度和按素材命名归因的销售额。",
     owner: "剪辑组",
-    next: "拆剪辑任务流",
-    actions: ["领取精剪任务", "上传素材库", "处理反馈修改", "提交拍摄素材"],
+    next: "接入绿联云盘和剪映入口",
+    actions: ["处理卡审修改", "领取剪辑数量", "上传绿联云盘", "查看销售归因"],
   },
   {
     id: "cockpit",
@@ -288,11 +288,25 @@ const imageOutputRows = [
   ["生成记录", "自动沉淀", "记录提示词、审核结果、输出图片和引用人"],
 ];
 
-const editorRows = [
-  ["罗沛任务分配", "组长", "本周精剪分配", "分配 70-75 条/人", "分配任务"],
-  ["戴秀婷", "剪辑组员", "反馈修改", "处理投手卡审反馈", "查看反馈"],
-  ["周亮", "剪辑组员", "网络素材", "2 个品类 / 20 条素材", "上传素材"],
-  ["邹泽敏", "剪辑组员", "拍摄任务", "牙膏/面膜/防晒素材", "提交素材"],
+const editorProfiles = [
+  { name: "罗沛", role: "剪辑组长", revise: 4, target: 18, uploaded: 11, sales: "待采集" },
+  { name: "戴秀婷", role: "剪辑组员", revise: 3, target: 16, uploaded: 9, sales: "待采集" },
+  { name: "周亮", role: "剪辑组员", revise: 2, target: 20, uploaded: 12, sales: "待采集" },
+  { name: "邹泽敏", role: "剪辑组员", revise: 5, target: 16, uploaded: 8, sales: "待采集" },
+];
+
+const editorRevisionRows = [
+  ["P0", "宝得娜切片素材_戴秀婷_0626_03", "功效表达过强", "刘秀厅", "戴秀婷", "待修改"],
+  ["P0", "泰丽店商品卡_周亮_0626_07", "前后对比不清晰", "苑佳乐", "周亮", "待修改"],
+  ["P1", "花本姿素材_邹泽敏_0626_02", "字幕卖点需弱化", "李树花", "邹泽敏", "修改中"],
+  ["P1", "优蜜琳场景图_罗沛_0626_01", "封面图卡审驳回", "刘秀厅", "罗沛", "待复核"],
+];
+
+const editorProductionRows = [
+  ["戴秀婷", "16", "9", "7", "绿联云盘/商品卡/戴秀婷", "上传中"],
+  ["周亮", "20", "12", "8", "绿联云盘/切片/周亮", "上传中"],
+  ["邹泽敏", "16", "8", "8", "绿联云盘/商品卡/邹泽敏", "待上传"],
+  ["罗沛", "18", "11", "7", "绿联云盘/组长复核/罗沛", "待确认"],
 ];
 
 const financeRows = [
@@ -392,6 +406,7 @@ const chartArea = document.querySelector("#chartArea");
 const todoList = document.querySelector("#todoList");
 const operationTable = document.querySelector("#operationTable");
 const pageTitle = document.querySelector("#pageTitle");
+const pageEyebrow = document.querySelector(".topbar .eyebrow");
 const moduleTitle = document.querySelector("#moduleTitle");
 const moduleDescription = document.querySelector("#moduleDescription");
 const moduleStatus = document.querySelector("#moduleStatus");
@@ -970,28 +985,157 @@ function renderAIImages() {
 
 function renderEditorDesk() {
   chartArea.innerHTML = `
-    <div class="account-board">
-      ${editorRows
-        .map(
-          ([task, owner, issue, action, button]) => `
-            <article class="account-card">
-              <div>
-                <strong>${task}</strong>
-                <span>${owner}</span>
-              </div>
-              <div class="issue-tag">${issue}</div>
-              <p>${action}</p>
-              <button class="mini-button" type="button">${button}</button>
-            </article>
-          `,
-        )
-        .join("")}
-    </div>
-    <div class="action-strip">
-      <button class="quick-action" type="button"><i data-lucide="list-checks"></i> 领取精剪任务</button>
-      <button class="quick-action" type="button"><i data-lucide="upload-cloud"></i> 上传创新素材库</button>
-      <button class="quick-action" type="button"><i data-lucide="message-square-warning"></i> 处理投手反馈</button>
-      <button class="quick-action" type="button"><i data-lucide="camera"></i> 提交拍摄素材</button>
+    <div class="editor-workbench">
+      <section class="editor-main">
+        <div class="admin-page-meta">
+          <div>
+            <span>内容创新部 / 剪辑生产</span>
+            <strong>剪辑每日生产台</strong>
+          </div>
+          <div class="admin-meta-tags">
+            <span>卡审修改优先</span>
+            <span>绿联云盘待接</span>
+            <span>剪映入口待内置</span>
+          </div>
+        </div>
+
+        <div class="editor-summary">
+          <div><span>卡审修改</span><strong>${editorRevisionRows.length}</strong></div>
+          <div><span>今日剪辑要求</span><strong>${editorProfiles.reduce((sum, item) => sum + item.target, 0)}</strong></div>
+          <div><span>已上传绿联</span><strong>${editorProfiles.reduce((sum, item) => sum + item.uploaded, 0)}</strong></div>
+          <div><span>剩余素材</span><strong>${editorProfiles.reduce((sum, item) => sum + item.target - item.uploaded, 0)}</strong></div>
+          <div><span>销售归因</span><strong>待采集</strong></div>
+        </div>
+
+        <div class="editor-object-row">
+          <article><i data-lucide="message-square-warning"></i><div><strong>卡审修改</strong><span>投手推送驳回原因，剪辑负责改素材</span></div></article>
+          <article><i data-lucide="scissors"></i><div><strong>素材剪辑</strong><span>按每天要求数量领取、制作、上传</span></div></article>
+          <article><i data-lucide="hard-drive-upload"></i><div><strong>绿联云盘</strong><span>接入上传路径，自动确认每人进度</span></div></article>
+          <article><i data-lucide="chart-no-axes-combined"></i><div><strong>销售归因</strong><span>后台素材名含剪辑姓名，自动提取业绩</span></div></article>
+          <article><i data-lucide="clapperboard"></i><div><strong>剪映入口</strong><span>优先内置，做不到先放跳转按钮</span></div></article>
+        </div>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>卡审修改队列</h3>
+              <p>由投手卡审失败自动推送；同一条问题同步给投手和对应剪辑。</p>
+            </div>
+            <div class="erp-batch-actions">
+              <button class="mini-button" type="button">标记修改中</button>
+              <button class="mini-button" type="button">上传复审</button>
+              <button class="mini-button" type="button">通知投手</button>
+            </div>
+          </div>
+          <div class="editor-table">
+            <div class="editor-table-row header">
+              <div>优先级</div>
+              <div>素材</div>
+              <div>卡审问题</div>
+              <div>投手</div>
+              <div>剪辑</div>
+              <div>状态</div>
+              <div>操作</div>
+            </div>
+            ${editorRevisionRows
+              .map(
+                ([priority, material, issue, buyer, editor, status]) => `
+                  <div class="editor-table-row">
+                    <div><span class="priority-badge ${priority.toLowerCase()}">${priority}</span></div>
+                    <div><strong>${material}</strong><small>来源：千川卡审采集</small></div>
+                    <div>${issue}</div>
+                    <div>${buyer}</div>
+                    <div>${editor}</div>
+                    <div><span class="state-tag ${status === "待修改" ? "warning" : ""}">${status}</span></div>
+                    <div class="erp-row-actions">
+                      <button class="mini-button" type="button">打开剪映</button>
+                      <button class="mini-button" type="button">上传绿联</button>
+                    </div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>每日剪辑数量与上传进度</h3>
+              <p>目标来自组长分配；完成情况通过绿联云盘路径和文件命名自动确认。</p>
+            </div>
+          </div>
+          <div class="editor-table compact">
+            <div class="editor-table-row production header">
+              <div>剪辑</div>
+              <div>要求数量</div>
+              <div>已上传</div>
+              <div>剩余</div>
+              <div>绿联路径</div>
+              <div>状态</div>
+            </div>
+            ${editorProductionRows
+              .map(
+                ([editor, target, uploaded, left, path, status]) => `
+                  <div class="editor-table-row production">
+                    <div><strong>${editor}</strong></div>
+                    <div>${target}</div>
+                    <div>${uploaded}</div>
+                    <div>${left}</div>
+                    <div>${path}</div>
+                    <div><span class="state-tag">${status}</span></div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+      </section>
+
+      <aside class="editor-rail">
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>今天先做</strong>
+            <span>剪辑组</span>
+          </div>
+          <div class="rail-task-list">
+            <div class="rail-task danger"><strong>先改卡审</strong><span>${editorRevisionRows.length} 条卡审问题，先处理投手推送</span></div>
+            <div class="rail-task warning"><strong>补齐数量</strong><span>${editorProfiles.reduce((sum, item) => sum + item.target - item.uploaded, 0)} 条素材未上传绿联</span></div>
+            <div class="rail-task"><strong>销售归因</strong><span>后台素材名按剪辑姓名抽取，生成个人销售额</span></div>
+          </div>
+        </section>
+
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>人员进度</strong>
+            <span>按人确认</span>
+          </div>
+          <div class="editor-progress-list">
+            ${editorProfiles
+              .map(
+                (item) => `
+                  <div class="editor-progress-row">
+                    <div><strong>${item.name}</strong><span>${item.role}</span></div>
+                    <em>${item.uploaded}/${item.target}</em>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>接入方式</strong>
+            <span>不做台账日报</span>
+          </div>
+          <div class="sync-list">
+            <div class="sync-row"><div><strong>绿联云盘</strong><span>读取路径、文件数、上传时间</span></div><em>待接</em></div>
+            <div class="sync-row"><div><strong>剪映</strong><span>优先内置；不行则跳转</span></div><em>待评估</em></div>
+            <div class="sync-row"><div><strong>销售归因</strong><span>后台素材名提取剪辑姓名</span></div><em>待采集</em></div>
+          </div>
+        </section>
+      </aside>
     </div>
   `;
 }
@@ -1190,6 +1334,38 @@ function renderMetrics() {
     return;
   }
 
+  if (activeModuleId === "editorDesk") {
+    const totalTarget = editorProfiles.reduce((sum, item) => sum + item.target, 0);
+    const totalUploaded = editorProfiles.reduce((sum, item) => sum + item.uploaded, 0);
+    const totalLeft = totalTarget - totalUploaded;
+    if (topbarAlertButton) {
+      topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>${editorRevisionRows.length} 条卡审修改`;
+    }
+    metricGrid.innerHTML = `
+      <article class="metric-card">
+        <span>卡审修改</span>
+        <strong>${editorRevisionRows.length}</strong>
+        <small class="down">投手推送后剪辑优先处理</small>
+      </article>
+      <article class="metric-card">
+        <span>今日要求数量</span>
+        <strong>${totalTarget}</strong>
+        <small>按组长分配到人</small>
+      </article>
+      <article class="metric-card">
+        <span>已上传绿联</span>
+        <strong>${totalUploaded}</strong>
+        <small>待接绿联云盘自动确认</small>
+      </article>
+      <article class="metric-card">
+        <span>剩余素材</span>
+        <strong>${totalLeft}</strong>
+        <small>不涉及台账和日报</small>
+      </article>
+    `;
+    return;
+  }
+
   if (topbarAlertButton) {
     topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>待接入提醒`;
   }
@@ -1243,6 +1419,28 @@ function renderTodos() {
     return;
   }
 
+  if (activeModuleId === "editorDesk") {
+    const totalTarget = editorProfiles.reduce((sum, item) => sum + item.target, 0);
+    const totalUploaded = editorProfiles.reduce((sum, item) => sum + item.uploaded, 0);
+    todoList.innerHTML = [
+      [`先处理卡审修改`, `${editorRevisionRows.length} 条来自投手推送的卡审问题`],
+      [`完成今日剪辑数量`, `已上传 ${totalUploaded} / 要求 ${totalTarget}`],
+      [`上传绿联云盘`, `按剪辑姓名和项目路径自动确认进度`],
+      [`检查销售归因`, `后台素材名含剪辑姓名，待自动采集个人销售额`],
+      [`剪映入口`, `优先内置剪映，做不到先提供跳转按钮`],
+    ]
+      .map(
+        ([title, detail]) => `
+          <div class="todo-item">
+            <strong>${title}</strong>
+            <span>${detail}</span>
+          </div>
+        `,
+      )
+      .join("");
+    return;
+  }
+
   todoList.innerHTML = todos
     .map(
       ([title, detail]) => `
@@ -1257,10 +1455,10 @@ function renderTodos() {
 
 function renderTable() {
   if (tablePanel) {
-    tablePanel.classList.toggle("hidden", activeModuleId === "buyerDesk");
+    tablePanel.classList.toggle("hidden", activeModuleId === "buyerDesk" || activeModuleId === "editorDesk");
   }
 
-  if (activeModuleId === "buyerDesk") {
+  if (activeModuleId === "buyerDesk" || activeModuleId === "editorDesk") {
     operationTable.innerHTML = "";
     return;
   }
@@ -1294,6 +1492,14 @@ function renderTable() {
 function renderDetails() {
   const item = getActiveModule();
   pageTitle.textContent = item.title;
+  if (pageEyebrow) {
+    pageEyebrow.textContent =
+      activeModuleId === "buyerDesk"
+        ? "业务中台 / 投手工作台 / 今日账户处理"
+        : activeModuleId === "editorDesk"
+          ? "业务中台 / 剪辑工作台 / 今日素材生产"
+          : `业务中台 / ${item.title}`;
+  }
   moduleTitle.textContent = item.title;
   moduleDescription.textContent = item.description;
   moduleStatus.textContent = item.status;
@@ -1309,6 +1515,7 @@ function render() {
   document.body.classList.toggle("electron-shell", isElectronShell);
   document.body.classList.add("commercial-admin-mode");
   document.body.classList.toggle("buyer-erp-mode", activeModuleId === "buyerDesk");
+  document.body.classList.toggle("editor-desk-mode", activeModuleId === "editorDesk");
   renderNav();
   renderMetrics();
   if (activeModuleId === "buyerDesk") {
