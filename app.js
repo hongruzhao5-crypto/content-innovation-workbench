@@ -368,8 +368,10 @@ const syncRuleRows = [
 let activeModuleId = "buyerDesk";
 let activeFilter = "all";
 let activeBuyerId = "liuxiuting";
+let activeBrowserAccountKey = "";
 const realAccountRows = Array.isArray(window.realAccountRows) ? window.realAccountRows : [];
 const feishuSources = window.feishuSourceRows || { folders: [], tables: [] };
+const isElectronShell = typeof navigator !== "undefined" && navigator.userAgent.includes("Electron");
 
 const loginView = document.querySelector("#loginView");
 const erpView = document.querySelector("#erpView");
@@ -485,6 +487,19 @@ function formatAccountName(row) {
   return row.账户名称 || row.当前账户名称 || "未命名账户";
 }
 
+function getAccountKey(row) {
+  return row.账户ID || `${row.登记人}-${formatAccountName(row)}`;
+}
+
+function findAccountByKey(key) {
+  return realAccountRows.find((row) => getAccountKey(row) === key) || null;
+}
+
+function getAccountBrowserUrl(row) {
+  const accountId = row && row.账户ID ? `?account_id=${encodeURIComponent(row.账户ID)}` : "";
+  return `https://qianchuan.jinritemai.com/${accountId}`;
+}
+
 function uniqueRows(rows) {
   const seen = new Set();
   return rows.filter((row) => {
@@ -521,17 +536,57 @@ function renderWorkRows(rows, emptyText) {
   return rows
     .map(
       (row) => `
-        <div class="work-row">
+        <div class="work-row ${getAccountKey(row) === activeBrowserAccountKey ? "active" : ""}">
           <div>
             <strong>${formatAccountName(row)}</strong>
             <span>${row.账户类型} / 余额 ${formatMoney(row.余额)} / ${row.账户状态}</span>
           </div>
           <div class="issue-tag">${row.今日异常}</div>
-          <button class="mini-button" type="button">处理</button>
+          <button class="mini-button" type="button" data-open-account="${getAccountKey(row)}">查看账户</button>
         </div>
       `,
     )
     .join("");
+}
+
+function renderEmbeddedBrowserPanel(rows) {
+  const selectedAccount = findAccountByKey(activeBrowserAccountKey) || rows[0] || null;
+  const selectedName = selectedAccount ? formatAccountName(selectedAccount) : "未选择账户";
+  const selectedStatus = selectedAccount ? `${selectedAccount.账户类型} / ${selectedAccount.账户状态} / 余额 ${formatMoney(selectedAccount.余额)}` : "从账户调整队列点击查看账户后打开";
+  const browserUrl = selectedAccount ? getAccountBrowserUrl(selectedAccount) : "about:blank";
+
+  return `
+    <section class="embedded-browser-panel">
+      <div class="embedded-browser-header">
+        <div>
+          <span>内置浏览器</span>
+          <h3>${selectedName}</h3>
+          <p>${selectedStatus}</p>
+        </div>
+        <div class="browser-toolbar">
+          <button class="icon-button" type="button" aria-label="后退"><i data-lucide="arrow-left"></i></button>
+          <button class="icon-button" type="button" aria-label="前进"><i data-lucide="arrow-right"></i></button>
+          <button class="icon-button" type="button" aria-label="刷新"><i data-lucide="refresh-cw"></i></button>
+          <button class="mini-button" type="button">保持登录</button>
+        </div>
+      </div>
+      <div class="browser-address-row">
+        <i data-lucide="lock-keyhole"></i>
+        <span>${browserUrl}</span>
+      </div>
+      ${
+        isElectronShell
+          ? `<webview class="embedded-browser-webview" src="${browserUrl}" partition="persist:qianchuan-accounts" allowpopups></webview>`
+          : `
+            <div class="embedded-browser-placeholder">
+              <i data-lucide="monitor-up"></i>
+              <strong>桌面端将直接在这里打开千川账户登录页</strong>
+              <span>当前公网网页只展示内置浏览器工作区。未来员工点击“查看账户”后，会在桌面端进入该账户后台并复用登录状态。</span>
+            </div>
+          `
+      }
+    </section>
+  `;
 }
 
 function renderBuyerDesk() {
@@ -631,6 +686,8 @@ function renderBuyerDesk() {
           </div>
         </section>
       </div>
+
+      ${renderEmbeddedBrowserPanel(actionRows)}
 
       <div class="work-main-grid lower">
         <section class="work-panel">
@@ -1113,6 +1170,7 @@ function refreshIcons() {
 }
 
 function render() {
+  document.body.classList.toggle("electron-shell", isElectronShell);
   renderNav();
   renderMetrics();
   if (activeModuleId === "buyerDesk") {
@@ -1156,6 +1214,14 @@ document.addEventListener("click", (event) => {
   const buyerTarget = event.target.closest("[data-buyer]");
   if (buyerTarget) {
     activeBuyerId = buyerTarget.dataset.buyer;
+    activeBrowserAccountKey = "";
+    render();
+    return;
+  }
+
+  const accountTarget = event.target.closest("[data-open-account]");
+  if (accountTarget) {
+    activeBrowserAccountKey = accountTarget.dataset.openAccount;
     render();
     return;
   }
