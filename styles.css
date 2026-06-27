@@ -3050,12 +3050,144 @@ body {
   display: none;
 }
 
+.cockpit-mode .dashboard-grid {
+  display: block;
+}
+
+.cockpit-mode .side-panel {
+  display: none;
+}
+
+.cockpit-workbench {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) 318px;
+  gap: 12px;
+  align-items: start;
+}
+
+.cockpit-main,
+.cockpit-rail {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cockpit-kpi-grid,
+.cockpit-mini-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.cockpit-kpi-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.cockpit-mini-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.cockpit-kpi-grid article,
+.cockpit-mini-grid article {
+  min-height: 86px;
+  padding: 12px;
+  border: 1px solid #e6e8ee;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.cockpit-kpi-grid span,
+.cockpit-kpi-grid small,
+.cockpit-mini-grid span,
+.cockpit-mini-grid small {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.cockpit-kpi-grid strong,
+.cockpit-mini-grid strong {
+  display: block;
+  margin: 7px 0 4px;
+  color: #111827;
+  font-size: 24px;
+  font-weight: 760;
+}
+
+.cockpit-section-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cockpit-employee-table {
+  overflow-x: auto;
+  border: 1px solid #e6e8ee;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.cockpit-employee-row {
+  display: grid;
+  grid-template-columns: 92px 108px minmax(240px, 1fr) 160px 120px 110px;
+  min-width: 900px;
+  border-bottom: 1px solid #e6e8ee;
+}
+
+.cockpit-employee-row:last-child {
+  border-bottom: 0;
+}
+
+.cockpit-employee-row.header {
+  min-height: 36px;
+  color: #646a73;
+  background: #f3f5f8;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.cockpit-employee-row > div {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 46px;
+  padding: 8px 10px;
+  border-right: 1px solid #e6e8ee;
+  font-size: 12px;
+}
+
+.cockpit-employee-row > div:last-child {
+  border-right: 0;
+}
+
+.cockpit-employee-row:nth-child(even):not(.header) {
+  background: #fbfcfe;
+}
+
+.cockpit-rail {
+  position: sticky;
+  top: 12px;
+}
+
+.sync-row small {
+  display: block;
+  grid-column: 1 / -1;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 @media (max-width: 1180px) {
   .shooter-workbench {
     grid-template-columns: 1fr;
   }
 
   .editor-workbench {
+    grid-template-columns: 1fr;
+  }
+
+  .cockpit-workbench {
     grid-template-columns: 1fr;
   }
 
@@ -3069,10 +3201,18 @@ body {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .cockpit-rail {
+    position: static;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .admin-query-panel,
   .business-object-row,
   .editor-summary,
-  .editor-object-row {
+  .editor-object-row,
+  .cockpit-kpi-grid,
+  .cockpit-mini-grid,
+  .cockpit-section-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -3099,6 +3239,10 @@ body {
   .editor-summary,
   .editor-rail,
   .editor-object-row,
+  .cockpit-kpi-grid,
+  .cockpit-mini-grid,
+  .cockpit-section-grid,
+  .cockpit-rail,
   .admin-query-panel,
   .business-object-row {
     grid-template-columns: 1fr;

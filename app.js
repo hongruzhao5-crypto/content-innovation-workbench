@@ -1,5 +1,17 @@
 const modules = [
   {
+    id: "cockpit",
+    title: "管理驾驶舱",
+    nav: "驾驶舱",
+    icon: "gauge",
+    priority: "P0",
+    status: "管理视角",
+    description: "管理者查看月度数据、昨日数据、员工工作量、工作内容、完成进度和需要干预的异常。",
+    owner: "管理者",
+    next: "接入自动采集后的经营与人员进度数据",
+    actions: ["查看月度经营", "查看昨日数据", "查看员工进度", "处理异常"],
+  },
+  {
     id: "buyerDesk",
     title: "投手今日作战台",
     nav: "投手",
@@ -22,18 +34,6 @@ const modules = [
     owner: "剪辑组",
     next: "接入绿联云盘和剪映入口",
     actions: ["处理卡审修改", "领取剪辑数量", "上传绿联云盘", "查看销售归因"],
-  },
-  {
-    id: "cockpit",
-    title: "管理驾驶舱",
-    nav: "驾驶舱",
-    icon: "gauge",
-    priority: "P0",
-    status: "管理视角",
-    description: "管理者查看经营结果、异常趋势、任务完成、素材进度、台账状态和老板关注指标。",
-    owner: "管理者",
-    next: "确定首页指标和待办规则",
-    actions: ["查看部门经营", "查看异常", "查看任务完成", "生成汇报"],
   },
   {
     id: "materials",
@@ -309,6 +309,37 @@ const editorProductionRows = [
   ["罗沛", "18", "11", "7", "绿联云盘/组长复核/罗沛", "待确认"],
 ];
 
+const cockpitMonthlyRows = [
+  ["月度销售额", "待采集", "商品卡 + 切片后台自动汇总"],
+  ["月度 ROI", "待采集", "千川账户逐账户采集后计算"],
+  ["月度素材产出", "待接", "绿联云盘文件数 + 素材后台归档"],
+  ["月度利润", "待同步", "商品卡 / 切片核算接入后生成"],
+];
+
+const cockpitYesterdayRows = [
+  ["昨日销售额", "待采集", "按商品卡、切片拆分"],
+  ["昨日消耗", "待采集", "千川账户后台自动采集"],
+  ["昨日 ROI 异常", "待采集", "低于规则阈值自动标红"],
+  ["昨日卡审失败", `${editorRevisionRows.length}`, "同步投手和剪辑处理"],
+];
+
+const cockpitEmployeeRows = [
+  ["刘秀厅", "投手组长", "账户巡检、卡审复核、充值跟进", "账户异常 2 / 低余额 6", "待自动采集"],
+  ["苑佳乐", "投手组员", "切片账户、挂账、卡审处理", "账户数据待采集", "待自动采集"],
+  ["李树花", "投手组员", "商品卡账户、开票、充值更新", "账户数据待采集", "待自动采集"],
+  ["罗沛", "剪辑组长", "卡审分配、剪辑进度确认", "11/18", "61%"],
+  ["戴秀婷", "剪辑组员", "卡审修改、素材剪辑、绿联上传", "9/16", "56%"],
+  ["周亮", "剪辑组员", "素材剪辑、绿联上传", "12/20", "60%"],
+  ["邹泽敏", "剪辑组员", "卡审修改、素材剪辑、绿联上传", "8/16", "50%"],
+];
+
+const cockpitRiskRows = [
+  ["P0", "账户状态采集未接", "投手任务仍靠历史底表兜底", "先做内置浏览器采集规则"],
+  ["P0", "卡审修改积压", `${editorRevisionRows.length} 条卡审素材待剪辑处理`, "先让剪辑处理卡审修改"],
+  ["P1", "绿联云盘未接", "剪辑上传进度暂不能自动确认", "接入路径/文件数/上传时间"],
+  ["P1", "销售归因未接", "剪辑个人销售额待后台素材名采集", "按素材命名提取剪辑姓名"],
+];
+
 const financeRows = [
   ["台账", "商品卡核算 / 切片核算 / WPS 台账", "2 个来源待确认", "接入在线台账后核对收入、成本、退款、佣金和利润", "查看台账"],
   ["充值提醒", "WPS 千川账户登记表", "4 个账户需处理", "按账号名、登记人、项目拆分余额提醒和到账状态", "创建提醒"],
@@ -390,7 +421,7 @@ const syncRuleRows = [
   ["P2", "飞书 璟美空间检查分析", "每 2 小时同步", "异常中心 / 驾驶舱", "待接口"],
 ];
 
-let activeModuleId = "buyerDesk";
+let activeModuleId = "cockpit";
 let activeFilter = "all";
 let activeBuyerId = "liuxiuting";
 let activeBrowserAccountKey = "";
@@ -673,6 +704,170 @@ function renderEmbeddedBrowserPanel(rows) {
           `
       }
     </section>
+  `;
+}
+
+function renderCockpit() {
+  const editorTarget = editorProfiles.reduce((sum, item) => sum + item.target, 0);
+  const editorUploaded = editorProfiles.reduce((sum, item) => sum + item.uploaded, 0);
+  const abnormalAccounts = getAbnormalRows(realAccountRows).length;
+  const lowBalanceAccounts = getRechargeRows(realAccountRows).length;
+
+  chartArea.innerHTML = `
+    <div class="cockpit-workbench">
+      <section class="cockpit-main">
+        <div class="admin-page-meta">
+          <div>
+            <span>内容创新部 / 管理者视角</span>
+            <strong>经营与人员进度一览</strong>
+          </div>
+          <div class="admin-meta-tags">
+            <span>月度数据</span>
+            <span>昨日数据</span>
+            <span>员工工作量</span>
+            <span>异常干预</span>
+          </div>
+        </div>
+
+        <div class="cockpit-kpi-grid">
+          ${cockpitMonthlyRows
+            .map(
+              ([title, value, detail]) => `
+                <article>
+                  <span>${title}</span>
+                  <strong>${value}</strong>
+                  <small>${detail}</small>
+                </article>
+              `,
+            )
+            .join("")}
+        </div>
+
+        <div class="cockpit-section-grid">
+          <section class="worktable-panel">
+            <div class="erp-panel-title">
+              <div>
+                <h3>昨日经营数据</h3>
+                <p>正式链路应由内置浏览器逐账户采集；未接字段不造假。</p>
+              </div>
+            </div>
+            <div class="cockpit-mini-grid">
+              ${cockpitYesterdayRows
+                .map(
+                  ([title, value, detail]) => `
+                    <article>
+                      <span>${title}</span>
+                      <strong>${value}</strong>
+                      <small>${detail}</small>
+                    </article>
+                  `,
+                )
+                .join("")}
+            </div>
+          </section>
+
+          <section class="worktable-panel">
+            <div class="erp-panel-title">
+              <div>
+                <h3>今日执行概况</h3>
+                <p>投手看账户异常；剪辑看卡审修改和绿联上传。</p>
+              </div>
+            </div>
+            <div class="cockpit-mini-grid">
+              <article><span>账户异常</span><strong>${abnormalAccounts}</strong><small>来自真实账户底表，后续自动采集</small></article>
+              <article><span>低余额账户</span><strong>${lowBalanceAccounts}</strong><small>低于 1000 需确认充值</small></article>
+              <article><span>卡审修改</span><strong>${editorRevisionRows.length}</strong><small>剪辑优先处理</small></article>
+              <article><span>剪辑上传</span><strong>${editorUploaded}/${editorTarget}</strong><small>绿联云盘待接入自动确认</small></article>
+            </div>
+          </section>
+        </div>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>员工工作量与完成进度</h3>
+              <p>管理者看每个人今天在干什么、进度多少、哪里需要介入。</p>
+            </div>
+            <div class="erp-batch-actions">
+              <button class="mini-button" type="button">按组筛选</button>
+              <button class="mini-button" type="button">查看异常</button>
+              <button class="mini-button" type="button">导出周报</button>
+            </div>
+          </div>
+          <div class="cockpit-employee-table">
+            <div class="cockpit-employee-row header">
+              <div>员工</div>
+              <div>角色</div>
+              <div>今日工作内容</div>
+              <div>工作量</div>
+              <div>完成进度</div>
+              <div>管理动作</div>
+            </div>
+            ${cockpitEmployeeRows
+              .map(
+                ([name, role, work, workload, progress]) => `
+                  <div class="cockpit-employee-row">
+                    <div><strong>${name}</strong></div>
+                    <div>${role}</div>
+                    <div>${work}</div>
+                    <div>${workload}</div>
+                    <div><span class="state-tag">${progress}</span></div>
+                    <div><button class="mini-button" type="button">查看明细</button></div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+      </section>
+
+      <aside class="cockpit-rail">
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>管理者先看</strong>
+            <span>今日判断顺序</span>
+          </div>
+          <div class="rail-task-list">
+            <div class="rail-task danger"><strong>先看异常</strong><span>账户异常、卡审积压、绿联未上传</span></div>
+            <div class="rail-task warning"><strong>再看进度</strong><span>员工工作量是否完成，谁需要提醒</span></div>
+            <div class="rail-task"><strong>最后看经营</strong><span>月度、昨日销售和 ROI 等待自动采集</span></div>
+          </div>
+        </section>
+
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>异常队列</strong>
+            <span>需要介入</span>
+          </div>
+          <div class="sync-list">
+            ${cockpitRiskRows
+              .map(
+                ([level, title, detail, action]) => `
+                  <div class="sync-row">
+                    <div><strong>${title}</strong><span>${detail}</span></div>
+                    <em>${level}</em>
+                    <small>${action}</small>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>数据接入状态</strong>
+            <span>不造假数</span>
+          </div>
+          <div class="sync-list">
+            <div class="sync-row"><div><strong>账户归属底表</strong><span>真实账户数据已可用</span></div><em>已接</em></div>
+            <div class="sync-row"><div><strong>月度销售</strong><span>后台自动采集后展示</span></div><em>待接</em></div>
+            <div class="sync-row"><div><strong>昨日 ROI</strong><span>千川逐账户采集</span></div><em>待接</em></div>
+            <div class="sync-row"><div><strong>员工进度</strong><span>绿联云盘 + 后台素材名</span></div><em>待接</em></div>
+          </div>
+        </section>
+      </aside>
+    </div>
   `;
 }
 
@@ -1300,6 +1495,37 @@ function renderMetrics() {
     return;
   }
 
+  if (activeModuleId === "cockpit") {
+    const editorTarget = editorProfiles.reduce((sum, item) => sum + item.target, 0);
+    const editorUploaded = editorProfiles.reduce((sum, item) => sum + item.uploaded, 0);
+    if (topbarAlertButton) {
+      topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>${cockpitRiskRows.length} 个管理异常`;
+    }
+    metricGrid.innerHTML = `
+      <article class="metric-card">
+        <span>月度销售额</span>
+        <strong>待采集</strong>
+        <small>后台自动采集后展示</small>
+      </article>
+      <article class="metric-card">
+        <span>昨日销售额</span>
+        <strong>待采集</strong>
+        <small>商品卡 / 切片拆分</small>
+      </article>
+      <article class="metric-card">
+        <span>员工完成进度</span>
+        <strong>${editorUploaded}/${editorTarget}</strong>
+        <small>剪辑上传进度；投手进度待采集</small>
+      </article>
+      <article class="metric-card">
+        <span>管理异常</span>
+        <strong>${cockpitRiskRows.length}</strong>
+        <small class="down">需要今天介入</small>
+      </article>
+    `;
+    return;
+  }
+
   if (activeModuleId === "buyerDesk") {
     const buyer = getActiveBuyer();
     const rows = getBuyerRows(buyer.name);
@@ -1395,6 +1621,25 @@ function renderMetrics() {
 }
 
 function renderTodos() {
+  if (activeModuleId === "cockpit") {
+    todoList.innerHTML = [
+      ["看月度数据", "销售额、ROI、利润等待后台自动采集"],
+      ["看昨日数据", "昨日销售、消耗、ROI 异常统一汇总"],
+      ["看员工进度", "投手看账户处理，剪辑看素材上传"],
+      ["处理异常", "账户采集、卡审积压、绿联未接是当前优先事项"],
+    ]
+      .map(
+        ([title, detail]) => `
+          <div class="todo-item">
+            <strong>${title}</strong>
+            <span>${detail}</span>
+          </div>
+        `,
+      )
+      .join("");
+    return;
+  }
+
   if (activeModuleId === "buyerDesk") {
     const buyer = getActiveBuyer();
     const rows = getBuyerRows(buyer.name);
@@ -1455,10 +1700,10 @@ function renderTodos() {
 
 function renderTable() {
   if (tablePanel) {
-    tablePanel.classList.toggle("hidden", activeModuleId === "buyerDesk" || activeModuleId === "editorDesk");
+    tablePanel.classList.toggle("hidden", activeModuleId === "cockpit" || activeModuleId === "buyerDesk" || activeModuleId === "editorDesk");
   }
 
-  if (activeModuleId === "buyerDesk" || activeModuleId === "editorDesk") {
+  if (activeModuleId === "cockpit" || activeModuleId === "buyerDesk" || activeModuleId === "editorDesk") {
     operationTable.innerHTML = "";
     return;
   }
@@ -1498,7 +1743,9 @@ function renderDetails() {
         ? "业务中台 / 投手工作台 / 今日账户处理"
         : activeModuleId === "editorDesk"
           ? "业务中台 / 剪辑工作台 / 今日素材生产"
-          : `业务中台 / ${item.title}`;
+          : activeModuleId === "cockpit"
+            ? "业务中台 / 管理驾驶舱 / 整体数据一览"
+            : `业务中台 / ${item.title}`;
   }
   moduleTitle.textContent = item.title;
   moduleDescription.textContent = item.description;
@@ -1514,11 +1761,14 @@ function refreshIcons() {
 function render() {
   document.body.classList.toggle("electron-shell", isElectronShell);
   document.body.classList.add("commercial-admin-mode");
+  document.body.classList.toggle("cockpit-mode", activeModuleId === "cockpit");
   document.body.classList.toggle("buyer-erp-mode", activeModuleId === "buyerDesk");
   document.body.classList.toggle("editor-desk-mode", activeModuleId === "editorDesk");
   renderNav();
   renderMetrics();
-  if (activeModuleId === "buyerDesk") {
+  if (activeModuleId === "cockpit") {
+    renderCockpit();
+  } else if (activeModuleId === "buyerDesk") {
     renderBuyerDesk();
   } else if (activeModuleId === "editorDesk") {
     renderEditorDesk();
