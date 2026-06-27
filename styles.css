@@ -2873,7 +2873,8 @@ body {
 }
 
 .editor-main,
-.editor-rail {
+.editor-rail,
+.materials-main {
   display: grid;
   gap: 10px;
   min-width: 0;
@@ -2971,6 +2972,17 @@ body {
   min-width: 780px;
 }
 
+.editor-table-row.material {
+  grid-template-columns: minmax(260px, 1.4fr) 120px 160px 96px minmax(220px, 1fr) 110px;
+  min-width: 980px;
+}
+
+.editor-table-row.history,
+.editor-table-row.finance-history {
+  grid-template-columns: 150px minmax(230px, 1.35fr) 120px 120px 120px;
+  min-width: 760px;
+}
+
 .editor-table-row:last-child {
   border-bottom: 0;
 }
@@ -3048,6 +3060,26 @@ body {
 
 .editor-desk-mode .side-panel {
   display: none;
+}
+
+.materials-mode .dashboard-grid {
+  display: block;
+}
+
+.materials-mode .side-panel {
+  display: none;
+}
+
+.materials-workbench {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) 318px;
+  gap: 12px;
+  align-items: start;
+}
+
+.finance-history-panel {
+  grid-column: 1 / -1;
 }
 
 .cockpit-mode .dashboard-grid {
@@ -3187,6 +3219,10 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .materials-workbench {
+    grid-template-columns: 1fr;
+  }
+
   .cockpit-workbench {
     grid-template-columns: 1fr;
   }
@@ -3239,6 +3275,7 @@ body {
   .editor-summary,
   .editor-rail,
   .editor-object-row,
+  .materials-workbench,
   .cockpit-kpi-grid,
   .cockpit-mini-grid,
   .cockpit-section-grid,

@@ -41,35 +41,11 @@ const modules = [
     nav: "素材",
     icon: "image",
     priority: "P0",
-    status: "空壳",
-    description: "承载网络素材、精剪素材、飞流素材、产品拍摄素材、卡审问题素材和低质搬运素材。",
+    status: "历史素材库",
+    description: "展示历史素材、文件夹、人员归档和绿联云盘分类，方便按人、项目、素材类型追溯和复用。",
     owner: "剪辑组 / 投手组",
-    next: "画素材审核反馈流",
-    actions: ["审核素材", "反馈修改", "上传账户", "处理低质搬运"],
-  },
-  {
-    id: "productCard",
-    title: "商品卡中心",
-    nav: "商品卡",
-    icon: "shopping-bag",
-    priority: "P0",
-    status: "空壳",
-    description: "管理商品卡素材审核、计划上传、千川投放数据、台账核算、充值开票和退货率。",
-    owner: "投手组",
-    next: "整理商品卡日流程",
-    actions: ["打开商品卡账户", "上传素材", "导出数据", "核算台账"],
-  },
-  {
-    id: "slicing",
-    title: "切片中心",
-    nav: "切片",
-    icon: "clapperboard",
-    priority: "P0",
-    status: "空壳",
-    description: "管理切片素材审核、达人账户上传、切片千川数据、台账核算、充值和挂账。",
-    owner: "投手组",
-    next: "整理切片日流程",
-    actions: ["打开达人账户", "审核切片", "上传素材", "跟进挂账"],
+    next: "接入绿联云盘文件夹、文件数、上传人和素材标签",
+    actions: ["查看历史素材", "按人筛选", "查看文件夹", "同步绿联云盘"],
   },
   {
     id: "accounts",
@@ -90,10 +66,10 @@ const modules = [
     icon: "landmark",
     priority: "P0",
     status: "新增",
-    description: "承载台账、充值提醒和发票对账，避免账户因为余额、挂账或发票问题影响投手正常投放。",
+    description: "承载充值、发票、物料购买、账户购买、刷粉数量和相关费用确认。",
     owner: "投手组 / 财务",
-    next: "建立台账、充值、发票三条工作流",
-    actions: ["查看台账", "创建充值提醒", "发票对账", "通知投手"],
+    next: "建立费用类历史记录和待确认提醒",
+    actions: ["充值确认", "发票对账", "物料购买", "账户购买", "刷粉数量"],
   },
   {
     id: "aiImages",
@@ -309,6 +285,21 @@ const editorProductionRows = [
   ["罗沛", "18", "11", "7", "绿联云盘/组长复核/罗沛", "待确认"],
 ];
 
+const materialFolderRows = [
+  ["绿联云盘/商品卡/历史素材", "商品卡", "刘秀厅 / 李树花", "待接", "主图、精剪、卡审问题"],
+  ["绿联云盘/切片/达人素材", "切片", "苑佳乐 / 周亮", "待接", "达人素材、混剪、封面"],
+  ["绿联云盘/剪辑组/戴秀婷", "人员归档", "戴秀婷", "待接", "卡审修改、精剪成片"],
+  ["绿联云盘/剪辑组/邹泽敏", "人员归档", "邹泽敏", "待接", "拍摄素材、修改素材"],
+  ["绿联云盘/产品拍摄/新包装", "拍摄素材", "罗沛", "待接", "牙膏、面膜、防晒"],
+];
+
+const materialHistoryRows = [
+  ["2026-06-26 18:40", "宝得娜切片素材_戴秀婷_0626_03", "卡审修改", "戴秀婷", "待复审"],
+  ["2026-06-26 17:15", "泰丽店商品卡_周亮_0626_07", "商品卡精剪", "周亮", "已上传绿联"],
+  ["2026-06-26 16:20", "花本姿素材_邹泽敏_0626_02", "卡审修改", "邹泽敏", "修改中"],
+  ["2026-06-26 15:05", "优蜜琳场景图_罗沛_0626_01", "封面图", "罗沛", "待投手复核"],
+];
+
 const cockpitMonthlyRows = [
   ["月度销售额", "待采集", "商品卡 + 切片后台自动汇总"],
   ["月度 ROI", "待采集", "千川账户逐账户采集后计算"],
@@ -341,9 +332,25 @@ const cockpitRiskRows = [
 ];
 
 const financeRows = [
-  ["台账", "商品卡核算 / 切片核算 / WPS 台账", "2 个来源待确认", "接入在线台账后核对收入、成本、退款、佣金和利润", "查看台账"],
-  ["充值提醒", "WPS 千川账户登记表", "4 个账户需处理", "按账号名、登记人、项目拆分余额提醒和到账状态", "创建提醒"],
-  ["发票对账", "商品卡 / 切片发票", "3 张待核对", "按商品卡和切片项目核对开票金额、收票状态和异常差额", "开始对账"],
+  ["充值确认", "千川账户余额 / 到账状态", "待自动采集", "低余额和充值到账需要投手确认，财务留痕。", "查看充值"],
+  ["发票对账", "商品卡 / 切片发票", "3 张待核对", "核对开票金额、收票状态和异常差额。", "开始对账"],
+  ["物料购买", "拍摄道具 / 产品样品 / 包材", "待登记", "记录素材生产相关物料购买、负责人、金额和用途。", "新增物料"],
+  ["账户购买", "抖音号 / 达人号 / 第三方账户", "待登记", "记录账户购买来源、实名状态、绑定人和成本。", "新增账户"],
+  ["刷粉数量", "新增账号 / 实名账号", "待确认", "记录刷粉账号、数量、费用、负责人和结果。", "记录刷粉"],
+];
+
+const financeHistoryRows = [
+  ["2026-06-26", "物料购买", "牙膏新包装拍摄道具", "罗沛", "待补金额"],
+  ["2026-06-26", "账户购买", "第三方千川账户对接", "刘秀厅", "待确认"],
+  ["2026-06-25", "刷粉数量", "新增抖音账号实名刷粉", "刘秀厅", "待接数据"],
+  ["2026-06-25", "充值确认", "切片账户低余额提醒", "苑佳乐", "待到账"],
+];
+
+const historyRows = [
+  ["2026-06-27 10:42", "管理驾驶舱", "查看月度、昨日和员工进度", "系统", "已记录"],
+  ["2026-06-26 20:58", "剪辑工作台", "新增卡审修改和绿联云盘进度", "系统", "已发布"],
+  ["2026-06-26 20:31", "投手工作台", "确定内置浏览器自动采集优先", "系统", "已发布"],
+  ["2026-06-26 19:45", "商业后台风格", "调整为内容业务中台", "系统", "已发布"],
 ];
 
 const dataSourceRows = [
@@ -1335,6 +1342,126 @@ function renderEditorDesk() {
   `;
 }
 
+function renderMaterials() {
+  chartArea.innerHTML = `
+    <div class="materials-workbench">
+      <section class="materials-main">
+        <div class="admin-page-meta">
+          <div>
+            <span>内容创新部 / 历史素材</span>
+            <strong>素材中心</strong>
+          </div>
+          <div class="admin-meta-tags">
+            <span>历史素材展示</span>
+            <span>绿联云盘待接</span>
+            <span>按人分类</span>
+            <span>按素材类型归档</span>
+          </div>
+        </div>
+
+        <div class="editor-summary">
+          <div><span>历史文件夹</span><strong>${materialFolderRows.length}</strong></div>
+          <div><span>素材记录</span><strong>${materialHistoryRows.length}</strong></div>
+          <div><span>人员分类</span><strong>4</strong></div>
+          <div><span>绿联状态</span><strong>待接</strong></div>
+          <div><span>可复用素材</span><strong>待识别</strong></div>
+        </div>
+
+        <div class="editor-object-row">
+          <article><i data-lucide="folder-open"></i><div><strong>历史文件夹</strong><span>展示原有绿联云盘文件夹和项目路径</span></div></article>
+          <article><i data-lucide="users"></i><div><strong>按人分类</strong><span>罗沛、戴秀婷、周亮、邹泽敏等人员素材</span></div></article>
+          <article><i data-lucide="tags"></i><div><strong>素材标签</strong><span>精剪、卡审、拍摄、封面、低质搬运</span></div></article>
+          <article><i data-lucide="history"></i><div><strong>历史追溯</strong><span>保留上传时间、负责人、状态和用途</span></div></article>
+          <article><i data-lucide="hard-drive"></i><div><strong>绿联云盘</strong><span>待接文件数、路径、上传时间、缩略图</span></div></article>
+        </div>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>绿联云盘文件夹</h3>
+              <p>素材中心主要看历史素材和文件夹，不再拆商品卡/切片独立模块。</p>
+            </div>
+            <div class="erp-batch-actions">
+              <button class="mini-button" type="button">同步绿联</button>
+              <button class="mini-button" type="button">按人筛选</button>
+              <button class="mini-button" type="button">按类型筛选</button>
+            </div>
+          </div>
+          <div class="editor-table">
+            <div class="editor-table-row material header">
+              <div>文件夹</div>
+              <div>分类</div>
+              <div>负责人</div>
+              <div>文件数</div>
+              <div>标签</div>
+              <div>操作</div>
+            </div>
+            ${materialFolderRows
+              .map(
+                ([folder, type, owner, count, tags]) => `
+                  <div class="editor-table-row material">
+                    <div><strong>${folder}</strong><small>来源：绿联云盘</small></div>
+                    <div>${type}</div>
+                    <div>${owner}</div>
+                    <div><span class="state-tag">${count}</span></div>
+                    <div>${tags}</div>
+                    <div><button class="mini-button" type="button">查看素材</button></div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>历史素材记录</h3>
+              <p>保留历史素材、修改、上传和复审状态，方便后续查找。</p>
+            </div>
+          </div>
+          <div class="editor-table compact">
+            <div class="editor-table-row history header">
+              <div>时间</div>
+              <div>素材</div>
+              <div>类型</div>
+              <div>人员</div>
+              <div>状态</div>
+            </div>
+            ${materialHistoryRows
+              .map(
+                ([time, material, type, owner, status]) => `
+                  <div class="editor-table-row history">
+                    <div>${time}</div>
+                    <div><strong>${material}</strong></div>
+                    <div>${type}</div>
+                    <div>${owner}</div>
+                    <div><span class="state-tag">${status}</span></div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+      </section>
+
+      <aside class="editor-rail">
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>素材中心先做</strong>
+            <span>历史归档</span>
+          </div>
+          <div class="rail-task-list">
+            <div class="rail-task"><strong>接绿联云盘</strong><span>读取文件夹、文件数、上传人、上传时间</span></div>
+            <div class="rail-task"><strong>按人归档</strong><span>每个剪辑所有历史素材集中展示</span></div>
+            <div class="rail-task"><strong>按类型分类</strong><span>精剪、卡审、拍摄、封面、低质搬运</span></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  `;
+}
+
 function renderFinance() {
   chartArea.innerHTML = `
     <div class="account-board">
@@ -1355,11 +1482,42 @@ function renderFinance() {
         .join("")}
     </div>
     <div class="action-strip">
-      <button class="quick-action" type="button"><i data-lucide="table-properties"></i> 导入台账数据</button>
+      <button class="quick-action" type="button"><i data-lucide="shopping-cart"></i> 记录物料购买</button>
+      <button class="quick-action" type="button"><i data-lucide="badge-dollar-sign"></i> 记录账户购买</button>
+      <button class="quick-action" type="button"><i data-lucide="user-plus"></i> 记录刷粉数量</button>
       <button class="quick-action" type="button"><i data-lucide="bell-ring"></i> 设置充值提醒</button>
       <button class="quick-action" type="button"><i data-lucide="receipt-text"></i> 核对发票金额</button>
-      <button class="quick-action" type="button"><i data-lucide="send"></i> 通知投手处理</button>
     </div>
+    <section class="worktable-panel finance-history-panel">
+      <div class="erp-panel-title">
+        <div>
+          <h3>财务历史记录</h3>
+          <p>保留物料购买、账户购买、刷粉数量、充值和发票确认记录。</p>
+        </div>
+      </div>
+      <div class="editor-table compact">
+        <div class="editor-table-row finance-history header">
+          <div>日期</div>
+          <div>类型</div>
+          <div>事项</div>
+          <div>负责人</div>
+          <div>状态</div>
+        </div>
+        ${financeHistoryRows
+          .map(
+            ([date, type, item, owner, status]) => `
+              <div class="editor-table-row finance-history">
+                <div>${date}</div>
+                <div>${type}</div>
+                <div><strong>${item}</strong></div>
+                <div>${owner}</div>
+                <div><span class="state-tag">${status}</span></div>
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
+    </section>
   `;
 }
 
@@ -1592,6 +1750,64 @@ function renderMetrics() {
     return;
   }
 
+  if (activeModuleId === "materials") {
+    if (topbarAlertButton) {
+      topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>绿联云盘待接`;
+    }
+    metricGrid.innerHTML = `
+      <article class="metric-card">
+        <span>历史文件夹</span>
+        <strong>${materialFolderRows.length}</strong>
+        <small>绿联云盘路径待接</small>
+      </article>
+      <article class="metric-card">
+        <span>素材记录</span>
+        <strong>${materialHistoryRows.length}</strong>
+        <small>历史素材、修改和上传状态</small>
+      </article>
+      <article class="metric-card">
+        <span>人员分类</span>
+        <strong>4</strong>
+        <small>按剪辑/负责人查看</small>
+      </article>
+      <article class="metric-card">
+        <span>可复用素材</span>
+        <strong>待识别</strong>
+        <small>后续按表现和标签筛选</small>
+      </article>
+    `;
+    return;
+  }
+
+  if (activeModuleId === "finance") {
+    if (topbarAlertButton) {
+      topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>${financeHistoryRows.length} 条费用记录`;
+    }
+    metricGrid.innerHTML = `
+      <article class="metric-card">
+        <span>物料购买</span>
+        <strong>待登记</strong>
+        <small>拍摄道具、样品、包材</small>
+      </article>
+      <article class="metric-card">
+        <span>账户购买</span>
+        <strong>待登记</strong>
+        <small>抖音号、达人号、第三方账户</small>
+      </article>
+      <article class="metric-card">
+        <span>刷粉数量</span>
+        <strong>待确认</strong>
+        <small>数量、费用、负责人</small>
+      </article>
+      <article class="metric-card">
+        <span>财务历史</span>
+        <strong>${financeHistoryRows.length}</strong>
+        <small>可追溯记录</small>
+      </article>
+    `;
+    return;
+  }
+
   if (topbarAlertButton) {
     topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>待接入提醒`;
   }
@@ -1686,6 +1902,44 @@ function renderTodos() {
     return;
   }
 
+  if (activeModuleId === "materials") {
+    todoList.innerHTML = [
+      ["接入绿联云盘", "读取文件夹、文件数、上传人、上传时间"],
+      ["按人查看素材", "查看每个剪辑/负责人所有历史素材"],
+      ["按类型分类", "精剪、卡审、拍摄、封面、低质搬运"],
+      ["保留历史记录", "方便查找旧素材、修改记录和上传状态"],
+    ]
+      .map(
+        ([title, detail]) => `
+          <div class="todo-item">
+            <strong>${title}</strong>
+            <span>${detail}</span>
+          </div>
+        `,
+      )
+      .join("");
+    return;
+  }
+
+  if (activeModuleId === "finance") {
+    todoList.innerHTML = [
+      ["记录物料购买", "拍摄道具、样品、包材等费用"],
+      ["记录账户购买", "抖音号、达人号、第三方账户来源和成本"],
+      ["记录刷粉数量", "账号、数量、费用、负责人和结果"],
+      ["保留历史记录", "后续查询费用和责任人"],
+    ]
+      .map(
+        ([title, detail]) => `
+          <div class="todo-item">
+            <strong>${title}</strong>
+            <span>${detail}</span>
+          </div>
+        `,
+      )
+      .join("");
+    return;
+  }
+
   todoList.innerHTML = todos
     .map(
       ([title, detail]) => `
@@ -1700,33 +1954,36 @@ function renderTodos() {
 
 function renderTable() {
   if (tablePanel) {
-    tablePanel.classList.toggle("hidden", activeModuleId === "cockpit" || activeModuleId === "buyerDesk" || activeModuleId === "editorDesk");
+    tablePanel.classList.toggle(
+      "hidden",
+      ["cockpit", "buyerDesk", "editorDesk", "materials", "finance"].includes(activeModuleId),
+    );
   }
 
-  if (activeModuleId === "cockpit" || activeModuleId === "buyerDesk" || activeModuleId === "editorDesk") {
+  if (["cockpit", "buyerDesk", "editorDesk", "materials", "finance"].includes(activeModuleId)) {
     operationTable.innerHTML = "";
     return;
   }
 
-  const rows = modules.filter((item) => activeFilter === "all" || priorityKey(item.priority) === activeFilter);
+  const rows = historyRows.filter((item, index) => activeFilter === "all" || (activeFilter === "p0" && index < 2) || activeFilter === "p1" || activeFilter === "p2");
 
   operationTable.innerHTML = `
     <div class="table-row header">
+      <div class="table-cell">时间</div>
       <div class="table-cell">模块</div>
-      <div class="table-cell">负责人</div>
-      <div class="table-cell">优先级</div>
-      <div class="table-cell">当前状态</div>
-      <div class="table-cell">下一步</div>
+      <div class="table-cell">记录</div>
+      <div class="table-cell">来源</div>
+      <div class="table-cell">状态</div>
     </div>
     ${rows
       .map(
-        (item) => `
+        ([time, module, record, source, status]) => `
           <div class="table-row">
-            <div class="table-cell"><strong>${item.title}</strong></div>
-            <div class="table-cell">${item.owner}</div>
-            <div class="table-cell">${item.priority}</div>
-            <div class="table-cell">${item.status}</div>
-            <div class="table-cell muted">${item.actions ? item.actions.join(" / ") : item.next}</div>
+            <div class="table-cell">${time}</div>
+            <div class="table-cell"><strong>${module}</strong></div>
+            <div class="table-cell">${record}</div>
+            <div class="table-cell">${source}</div>
+            <div class="table-cell"><span class="state-tag">${status}</span></div>
           </div>
         `,
       )
@@ -1743,6 +2000,10 @@ function renderDetails() {
         ? "业务中台 / 投手工作台 / 今日账户处理"
         : activeModuleId === "editorDesk"
           ? "业务中台 / 剪辑工作台 / 今日素材生产"
+          : activeModuleId === "materials"
+            ? "业务中台 / 素材中心 / 历史素材与绿联云盘"
+            : activeModuleId === "finance"
+              ? "业务中台 / 财务模块 / 费用与购买记录"
           : activeModuleId === "cockpit"
             ? "业务中台 / 管理驾驶舱 / 整体数据一览"
             : `业务中台 / ${item.title}`;
@@ -1764,6 +2025,7 @@ function render() {
   document.body.classList.toggle("cockpit-mode", activeModuleId === "cockpit");
   document.body.classList.toggle("buyer-erp-mode", activeModuleId === "buyerDesk");
   document.body.classList.toggle("editor-desk-mode", activeModuleId === "editorDesk");
+  document.body.classList.toggle("materials-mode", activeModuleId === "materials");
   renderNav();
   renderMetrics();
   if (activeModuleId === "cockpit") {
@@ -1772,6 +2034,8 @@ function render() {
     renderBuyerDesk();
   } else if (activeModuleId === "editorDesk") {
     renderEditorDesk();
+  } else if (activeModuleId === "materials") {
+    renderMaterials();
   } else if (activeModuleId === "finance") {
     renderFinance();
   } else if (activeModuleId === "aiImages") {
