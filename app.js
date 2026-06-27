@@ -89,11 +89,11 @@ const modules = [
     nav: "报表",
     icon: "bar-chart-3",
     priority: "P0",
-    status: "空壳",
-    description: "承载商品卡日报、切片日报、素材任务日报、账户维护日报、月度业绩核算和老板汇报。",
-    owner: "投手组 / 管理者",
-    next: "整理台账核算流程",
-    actions: ["导入 CSV", "触发核算", "检查群消息", "生成日报"],
+    status: "账务集合地",
+    description: "承载财务里所有账：收入、支出、报销、物料、账户购买、刷粉、投流等系统内记录，并预留云端同步到飞书。",
+    owner: "管理者 / 财务",
+    next: "建立系统内记录库，再同步到飞书表格/多维表",
+    actions: ["录入账务", "查询历史", "汇总收支", "同步飞书"],
   },
   {
     id: "automation",
@@ -371,6 +371,49 @@ const historyRows = [
   ["2026-06-26 20:58", "剪辑工作台", "新增卡审修改和绿联云盘进度", "系统", "已发布"],
   ["2026-06-26 20:31", "投手工作台", "确定内置浏览器自动采集优先", "系统", "已发布"],
   ["2026-06-26 19:45", "商业后台风格", "调整为内容业务中台", "系统", "已发布"],
+];
+
+const reportLedgerRows = [
+  ["2026-06-27", "收入", "卖货收入-整体支付金额", "待采集", "系统采集", "待同步飞书", "收入台账.整体支付金额"],
+  ["2026-06-27", "收入", "卖货收入-有效收入金额", "待采集", "系统采集", "待同步飞书", "收入台账.有效收入金额"],
+  ["2026-06-27", "支出", "投流消耗", "待采集", "千川采集", "待同步飞书", "投流台账.千川消耗"],
+  ["2026-06-26", "支出", "物料采买-拍摄道具", "待填写", "财务录入", "系统内暂存", "支出台账.物料采买"],
+  ["2026-06-26", "支出", "账户购买-第三方账户", "待填写", "财务录入", "系统内暂存", "支出台账.账户购买"],
+  ["2026-06-25", "支出", "刷粉费用-新增账号", "待填写", "财务录入", "系统内暂存", "支出台账.刷粉费用"],
+  ["2026-06-25", "报销", "素材拍摄临时费用", "待填写", "员工提交", "系统内暂存", "报销台账.员工报销"],
+];
+
+const reportCategoryRows = [
+  ["卖货收入", "收入", "待采集", "整体支付金额、有效收入金额"],
+  ["投流消耗", "支出", "待采集", "千川账户自动采集"],
+  ["物料采买", "支出", "待填写", "拍摄道具、样品、包材"],
+  ["账户购买", "支出", "待填写", "抖音号、达人号、第三方账户"],
+  ["刷粉费用", "支出", "待填写", "账号、数量、费用、负责人"],
+  ["报销", "支出", "待填写", "员工报销、临时费用"],
+  ["其他费用", "支出", "待填写", "工具、外包、杂项"],
+];
+
+const reportSyncRows = [
+  ["收入台账", "卖货收入：支付金额 / 有效收入", "系统采集后入库", "飞书多维表", "待接接口"],
+  ["支出台账", "投流、物料、账户购买、刷粉、其他费用", "系统录入 + 后台采集", "飞书表格", "待同步"],
+  ["报销台账", "员工提交、财务复核、付款状态", "系统内审批记录", "飞书表格", "待同步"],
+  ["投流台账", "千川消耗、账户归属、投手负责人", "内置浏览器采集", "飞书表格", "待接"],
+];
+
+const reportFeishuFieldRows = [
+  ["系统账务ID", "record_id", "系统生成", "唯一追踪，不让飞书反向覆盖"],
+  ["发生日期", "date", "系统填写 / 后台采集", "按日、月汇总"],
+  ["账务类型", "category", "收入 / 支出 / 报销", "统一分类口径"],
+  ["费用项目", "item", "投流 / 物料 / 账户 / 刷粉 / 其他", "用于月度费用结构"],
+  ["金额状态", "amount_status", "待采集 / 待填写 / 已确认", "没有真实数据不填假数"],
+  ["同步状态", "sync_status", "待同步 / 已同步 / 同步失败", "失败进入人工接管"],
+];
+
+const reportWorkflowRows = [
+  ["1", "系统内记录", "员工只补充必要信息，收入和投流优先自动采集", "进行中"],
+  ["2", "规则校验", "检查金额缺失、负责人缺失、分类冲突和重复记录", "待配置"],
+  ["3", "同步飞书", "把已确认记录推到飞书表格 / 多维表用于共享备份", "待接口"],
+  ["4", "失败接管", "同步失败、字段缺失、权限异常时生成财务待办", "待接"],
 ];
 
 const dataSourceRows = [
@@ -1672,6 +1715,215 @@ function renderFinance() {
   `;
 }
 
+function renderReports() {
+  const pendingSyncCount = reportLedgerRows.filter((row) => row[5].includes("待同步") || row[5].includes("暂存")).length;
+  const manualPendingCount = reportLedgerRows.filter((row) => row[3].includes("待填写") || row[3].includes("待采集")).length;
+  chartArea.innerHTML = `
+    <div class="reports-workbench">
+      <section class="materials-main">
+        <div class="admin-page-meta">
+          <div>
+            <span>内容创新部 / 账务集合地</span>
+            <strong>数据报表</strong>
+          </div>
+          <div class="admin-meta-tags">
+            <span>系统内填写</span>
+            <span>账务记录库</span>
+            <span>历史查询</span>
+            <span>同步飞书</span>
+          </div>
+        </div>
+
+        <div class="finance-overview-grid">
+          <article><span>本月收入</span><strong>待采集</strong><small>卖货收入：支付金额 / 有效收入</small></article>
+          <article><span>本月支出</span><strong>待汇总</strong><small>投流、物料、账户、刷粉、报销</small></article>
+          <article><span>账务记录</span><strong>${reportLedgerRows.length}</strong><small>系统内记录库</small></article>
+          <article><span>飞书待同步</span><strong>${pendingSyncCount}</strong><small>待接接口，不填假数</small></article>
+        </div>
+
+        <div class="editor-object-row">
+          <article><i data-lucide="database"></i><div><strong>主库在系统</strong><span>报销、支出、收入、投流先进入系统内账务库</span></div></article>
+          <article><i data-lucide="scan-line"></i><div><strong>自动采集优先</strong><span>收入、投流消耗优先从后台采集，人工只补充和确认</span></div></article>
+          <article><i data-lucide="table"></i><div><strong>飞书只做同步</strong><span>飞书用于共享、备份和历史兜底，不做员工主入口</span></div></article>
+          <article><i data-lucide="circle-alert"></i><div><strong>失败可接管</strong><span>字段缺失、同步失败、权限异常自动生成财务待办</span></div></article>
+          <article><i data-lucide="file-check-2"></i><div><strong>月度汇总</strong><span>按收入、费用、项目、负责人沉淀经营报表</span></div></article>
+        </div>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>账务分类汇总</h3>
+              <p>财务里的所有账最终汇总到这里；飞书是同步出口，不是重复填报入口。</p>
+            </div>
+            <div class="erp-batch-actions">
+              <button class="mini-button" type="button">新增账务</button>
+              <button class="mini-button" type="button">汇总本月</button>
+              <button class="mini-button" type="button">同步飞书</button>
+            </div>
+          </div>
+          <div class="editor-table compact">
+            <div class="editor-table-row report-category header">
+              <div>分类</div>
+              <div>类型</div>
+              <div>金额</div>
+              <div>说明</div>
+            </div>
+            ${reportCategoryRows
+              .map(
+                ([category, type, amount, detail]) => `
+                  <div class="editor-table-row report-category">
+                    <div><strong>${category}</strong></div>
+                    <div>${type}</div>
+                    <div><span class="state-tag">${amount}</span></div>
+                    <div>${detail}</div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>账务历史记录</h3>
+              <p>报销、支出、收入、投流、物料、账户购买、刷粉等全部在这里查，并标明飞书目标字段。</p>
+            </div>
+          </div>
+          <div class="editor-table">
+            <div class="editor-table-row report-ledger header">
+              <div>日期</div>
+              <div>类型</div>
+              <div>事项</div>
+              <div>金额</div>
+              <div>来源</div>
+              <div>状态</div>
+              <div>飞书目标</div>
+            </div>
+            ${reportLedgerRows
+              .map(
+                ([date, type, item, amount, source, status, target]) => `
+                  <div class="editor-table-row report-ledger">
+                    <div>${date}</div>
+                    <div>${type}</div>
+                    <div><strong>${item}</strong></div>
+                    <div>${amount}</div>
+                    <div>${source}</div>
+                    <div><span class="state-tag">${status}</span></div>
+                    <div>${target}</div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>飞书同步队列</h3>
+              <p>先把系统内账务记录校验通过，再推送到对应飞书表格 / 多维表。</p>
+            </div>
+          </div>
+          <div class="editor-table compact">
+            <div class="editor-table-row report-sync header">
+              <div>同步表</div>
+              <div>同步内容</div>
+              <div>系统来源</div>
+              <div>飞书目标</div>
+              <div>状态</div>
+            </div>
+            ${reportSyncRows
+              .map(
+                ([name, content, source, target, status]) => `
+                  <div class="editor-table-row report-sync">
+                    <div><strong>${name}</strong></div>
+                    <div>${content}</div>
+                    <div>${source}</div>
+                    <div>${target}</div>
+                    <div><span class="state-tag ${status.includes("待接") ? "warning" : ""}">${status}</span></div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+
+        <section class="worktable-panel reports-two-column">
+          <div>
+            <div class="erp-panel-title">
+              <div>
+                <h3>飞书字段映射</h3>
+                <p>字段先统一口径，后面接接口时直接落表。</p>
+              </div>
+            </div>
+            <div class="report-field-list">
+              ${reportFeishuFieldRows
+                .map(
+                  ([systemField, feishuField, source, note]) => `
+                    <div>
+                      <strong>${systemField}</strong>
+                      <span>${feishuField}</span>
+                      <small>${source} · ${note}</small>
+                    </div>
+                  `,
+                )
+                .join("")}
+            </div>
+          </div>
+          <div>
+            <div class="erp-panel-title">
+              <div>
+                <h3>同步流程</h3>
+                <p>没有接通接口前，所有状态明确标待接 / 待同步。</p>
+              </div>
+            </div>
+            <div class="report-flow-list">
+              ${reportWorkflowRows
+                .map(
+                  ([step, title, detail, status]) => `
+                    <div>
+                      <b>${step}</b>
+                      <strong>${title}</strong>
+                      <span>${detail}</span>
+                      <em>${status}</em>
+                    </div>
+                  `,
+                )
+                .join("")}
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <aside class="editor-rail">
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>报表先做</strong>
+            <span>账务集合地</span>
+          </div>
+          <div class="rail-task-list">
+            <div class="rail-task"><strong>待补金额</strong><span>${manualPendingCount} 条记录还缺真实金额，先标待采集 / 待填写</span></div>
+            <div class="rail-task"><strong>同步队列</strong><span>${reportSyncRows.length} 类账务准备同步飞书，接口未接前不伪装完成</span></div>
+            <div class="rail-task"><strong>接管规则</strong><span>同步失败、字段缺失、权限异常进入财务待办</span></div>
+          </div>
+        </section>
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>飞书定位</strong>
+            <span>云端备份</span>
+          </div>
+          <div class="sync-list">
+            <div class="sync-row"><div><strong>不是主入口</strong><span>员工不重复填飞书</span></div><em>已明确</em></div>
+            <div class="sync-row"><div><strong>同步方向</strong><span>系统账务库 -> 飞书</span></div><em>待接</em></div>
+            <div class="sync-row"><div><strong>失败处理</strong><span>生成财务待办，人工确认后重试</span></div><em>待配置</em></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  `;
+}
+
 function renderBackendData() {
   const connectedCount = dataSourceRows.filter((item) => item.status.includes("已") || item.status.includes("可读") || item.status.includes("访问")).length;
   const pendingInterfaceCount = dataSourceRows.filter((item) => item.platform === "飞书").length;
@@ -1989,6 +2241,37 @@ function renderMetrics() {
     return;
   }
 
+  if (activeModuleId === "reports") {
+    const pendingSyncCount = reportLedgerRows.filter((row) => row[5].includes("待同步") || row[5].includes("暂存")).length;
+    const manualPendingCount = reportLedgerRows.filter((row) => row[3].includes("待填写") || row[3].includes("待采集")).length;
+    if (topbarAlertButton) {
+      topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>${pendingSyncCount} 条待同步`;
+    }
+    metricGrid.innerHTML = `
+      <article class="metric-card">
+        <span>账务记录</span>
+        <strong>${reportLedgerRows.length}</strong>
+        <small>系统内记录库</small>
+      </article>
+      <article class="metric-card">
+        <span>待补真实金额</span>
+        <strong>${manualPendingCount}</strong>
+        <small>待采集 / 待填写</small>
+      </article>
+      <article class="metric-card">
+        <span>飞书待同步</span>
+        <strong>${pendingSyncCount}</strong>
+        <small>接口未接，不伪装完成</small>
+      </article>
+      <article class="metric-card">
+        <span>同步表</span>
+        <strong>${reportSyncRows.length}</strong>
+        <small>收入、支出、报销、投流</small>
+      </article>
+    `;
+    return;
+  }
+
   if (topbarAlertButton) {
     topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>待接入提醒`;
   }
@@ -2140,6 +2423,25 @@ function renderTodos() {
     return;
   }
 
+  if (activeModuleId === "reports") {
+    todoList.innerHTML = [
+      ["补真实金额", "待采集 / 待填写的记录先不填假数"],
+      ["校验账务字段", "日期、类型、费用项目、金额状态、同步状态统一口径"],
+      ["同步飞书队列", "系统账务库确认后再推送到飞书表格 / 多维表"],
+      ["失败人工接管", "同步失败、字段缺失、权限异常生成财务待办"],
+    ]
+      .map(
+        ([title, detail]) => `
+          <div class="todo-item">
+            <strong>${title}</strong>
+            <span>${detail}</span>
+          </div>
+        `,
+      )
+      .join("");
+    return;
+  }
+
   todoList.innerHTML = todos
     .map(
       ([title, detail]) => `
@@ -2156,11 +2458,11 @@ function renderTable() {
   if (tablePanel) {
     tablePanel.classList.toggle(
       "hidden",
-      ["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance"].includes(activeModuleId),
+      ["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance", "reports"].includes(activeModuleId),
     );
   }
 
-  if (["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance"].includes(activeModuleId)) {
+  if (["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance", "reports"].includes(activeModuleId)) {
     operationTable.innerHTML = "";
     return;
   }
@@ -2206,6 +2508,8 @@ function renderDetails() {
               ? "业务中台 / 账户中心 / 全部账户列表"
             : activeModuleId === "finance"
               ? "业务中台 / 财务模块 / 费用与购买记录"
+            : activeModuleId === "reports"
+              ? "业务中台 / 数据报表 / 账务集合与飞书同步"
           : activeModuleId === "cockpit"
             ? "业务中台 / 管理驾驶舱 / 整体数据一览"
             : `业务中台 / ${item.title}`;
@@ -2230,6 +2534,7 @@ function render() {
   document.body.classList.toggle("materials-mode", activeModuleId === "materials");
   document.body.classList.toggle("accounts-mode", activeModuleId === "accounts");
   document.body.classList.toggle("finance-mode", activeModuleId === "finance");
+  document.body.classList.toggle("reports-mode", activeModuleId === "reports");
   renderNav();
   renderMetrics();
   if (activeModuleId === "cockpit") {
@@ -2244,6 +2549,8 @@ function render() {
     renderAccounts();
   } else if (activeModuleId === "finance") {
     renderFinance();
+  } else if (activeModuleId === "reports") {
+    renderReports();
   } else if (activeModuleId === "aiImages") {
     renderAIImages();
   } else if (activeModuleId === "backendData") {
