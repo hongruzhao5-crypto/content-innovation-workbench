@@ -101,11 +101,11 @@ const modules = [
     nav: "自动化",
     icon: "workflow",
     priority: "P1",
-    status: "空壳",
-    description: "承载 CSV 导入、n8n 核算、自动日报、异常提醒、飞书通知和失败任务人工接管。",
+    status: "运行控制台",
+    description: "承载自动采集、规则判断、任务派发、执行日志和失败人工接管；员工看任务结果，管理员看自动化运行状态。",
     owner: "系统",
-    next: "从台账核算开始",
-    actions: ["查看执行日志", "重试失败任务", "人工接管", "配置提醒"],
+    next: "先配置账户巡检、卡审转交、飞书同步和台账核算四条工作流",
+    actions: ["查看工作流", "查看规则库", "重试失败任务", "人工接管"],
   },
   {
     id: "backendData",
@@ -489,6 +489,37 @@ const syncRuleRows = [
   ["P1", "飞书 商品卡核算", "每日 9:30 同步", "商品卡日报 / 财务台账", "待接口"],
   ["P1", "飞书 切片核算", "每日 9:30 同步", "切片日报 / 财务台账", "待接口"],
   ["P2", "飞书 璟美空间检查分析", "每 2 小时同步", "异常中心 / 驾驶舱", "待接口"],
+];
+
+const automationWorkflowRows = [
+  ["账户巡检", "内置浏览器 / 千川后台", "上班后自动 + 手动触发", "投手今日任务", "待接", "打开账户 -> 截图/OCR -> 识别余额/状态/ROI -> 生成任务"],
+  ["卡审失败转交", "素材审核页 / 页面文本", "识别到卡审失败", "投手 + 剪辑任务", "待接", "抓取驳回原因 -> 匹配剪辑 -> 同步双方处理"],
+  ["低余额充值提醒", "账户余额页", "余额低于阈值", "投手 / 财务", "待配置", "识别余额 -> 匹配负责人 -> 生成充值确认"],
+  ["台账核算", "CSV / n8n / 飞书台账", "上传后触发", "数据报表 / 群通知", "待接口", "导入文件 -> 核算 -> 校验异常 -> 留存结果"],
+  ["飞书账务同步", "系统账务库", "每日定时 + 手动同步", "飞书表格 / 多维表", "待接口", "字段校验 -> 写入飞书 -> 失败进入接管"],
+];
+
+const automationRuleRows = [
+  ["账户规则", "低余额", "余额 < 阈值", "生成充值确认任务", "对应投手 / 财务", "待配置"],
+  ["账户规则", "账户异常", "账户状态非正常", "生成账户核对任务", "对应投手", "待接"],
+  ["投放规则", "ROI 异常", "昨日 ROI 低于阈值", "生成账户调控任务", "对应投手", "待接"],
+  ["素材规则", "卡审失败", "审核状态=失败 / 出现驳回原因", "同步投手和对应剪辑", "投手 + 剪辑", "待接"],
+  ["素材规则", "低质搬运", "命中低质搬运提示", "生成提审或删除任务", "对应投手", "待接"],
+  ["同步规则", "飞书写入失败", "接口失败 / 字段缺失 / 权限异常", "生成财务接管任务", "财务 / 管理者", "待配置"],
+];
+
+const automationExecutionRows = [
+  ["2026-06-27 09:30", "账户巡检", "待接", "0", "等待内置浏览器采集规则"],
+  ["2026-06-27 09:35", "卡审失败转交", "待接", "0", "等待素材审核页识别"],
+  ["2026-06-27 10:00", "飞书账务同步", "待接口", "0", "接口未接，当前只保留同步队列"],
+  ["2026-06-26 20:58", "剪辑任务更新", "已记录", "0", "卡审修改和绿联进度已进入页面原型"],
+];
+
+const automationHandoffRows = [
+  ["字段缺失", "缺负责人、金额、账户归属时停止自动派发", "进入对应模块待补信息"],
+  ["识别低置信", "OCR/页面文本识别不稳定时不直接改数据", "进入人工确认"],
+  ["同步失败", "飞书接口失败、权限异常或字段不匹配", "生成财务接管任务"],
+  ["规则冲突", "同一账户同时命中多个高优先级规则", "进入管理者复核"],
 ];
 
 let activeModuleId = "cockpit";
@@ -1924,6 +1955,193 @@ function renderReports() {
   `;
 }
 
+function renderAutomation() {
+  const pendingWorkflowCount = automationWorkflowRows.filter((row) => row[4].includes("待")).length;
+  const pendingRuleCount = automationRuleRows.filter((row) => row[5].includes("待")).length;
+  const handoffCount = automationHandoffRows.length;
+  chartArea.innerHTML = `
+    <div class="automation-workbench">
+      <section class="automation-main">
+        <div class="admin-page-meta">
+          <div>
+            <span>内容创新部 / 自动化运行控制台</span>
+            <strong>自动化中心</strong>
+          </div>
+          <div class="admin-meta-tags">
+            <span>触发器</span>
+            <span>条件规则</span>
+            <span>任务派发</span>
+            <span>执行日志</span>
+            <span>人工接管</span>
+          </div>
+        </div>
+
+        <div class="finance-overview-grid">
+          <article><span>工作流</span><strong>${automationWorkflowRows.length}</strong><small>账户、素材、台账、同步</small></article>
+          <article><span>核心规则</span><strong>${automationRuleRows.length}</strong><small>只列业务关键规则</small></article>
+          <article><span>待接 / 待配置</span><strong>${pendingWorkflowCount + pendingRuleCount}</strong><small>不伪装已自动化</small></article>
+          <article><span>接管场景</span><strong>${handoffCount}</strong><small>失败后有人处理</small></article>
+        </div>
+
+        <div class="automation-pipeline">
+          <article><i data-lucide="mouse-pointer-click"></i><strong>触发</strong><span>定时、员工打开后台、上传文件、手动同步</span></article>
+          <i data-lucide="arrow-right"></i>
+          <article><i data-lucide="scan-line"></i><strong>采集</strong><span>页面文本、截图/OCR、飞书/WPS、CSV</span></article>
+          <i data-lucide="arrow-right"></i>
+          <article><i data-lucide="git-branch"></i><strong>判断</strong><span>余额、状态、ROI、卡审、字段完整性</span></article>
+          <i data-lucide="arrow-right"></i>
+          <article><i data-lucide="send"></i><strong>派发</strong><span>投手、剪辑、财务、管理者待办</span></article>
+          <i data-lucide="arrow-right"></i>
+          <article><i data-lucide="life-buoy"></i><strong>接管</strong><span>失败、低置信、字段缺失进入人工处理</span></article>
+        </div>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>自动化工作流</h3>
+              <p>第一层看流程是否在跑；规则只作为每条流程的配置，不在员工工作台铺满。</p>
+            </div>
+            <div class="erp-batch-actions">
+              <button class="mini-button" type="button">新增工作流</button>
+              <button class="mini-button" type="button">手动运行</button>
+              <button class="mini-button" type="button">查看失败</button>
+            </div>
+          </div>
+          <div class="editor-table">
+            <div class="editor-table-row automation-flow-row header">
+              <div>流程</div>
+              <div>来源</div>
+              <div>触发方式</div>
+              <div>输出</div>
+              <div>状态</div>
+              <div>步骤</div>
+            </div>
+            ${automationWorkflowRows
+              .map(
+                ([name, source, trigger, output, status, steps]) => `
+                  <div class="editor-table-row automation-flow-row">
+                    <div><strong>${name}</strong></div>
+                    <div>${source}</div>
+                    <div>${trigger}</div>
+                    <div>${output}</div>
+                    <div><span class="state-tag ${status.includes("待") ? "warning" : ""}">${status}</span></div>
+                    <div>${steps}</div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>核心规则库</h3>
+              <p>只展示会改变任务派发的关键规则；底层识别细节后续放到配置页或技术日志。</p>
+            </div>
+          </div>
+          <div class="editor-table">
+            <div class="editor-table-row automation-rule-row header">
+              <div>分组</div>
+              <div>规则</div>
+              <div>触发条件</div>
+              <div>系统动作</div>
+              <div>推送对象</div>
+              <div>状态</div>
+            </div>
+            ${automationRuleRows
+              .map(
+                ([group, rule, condition, action, target, status]) => `
+                  <div class="editor-table-row automation-rule-row">
+                    <div>${group}</div>
+                    <div><strong>${rule}</strong></div>
+                    <div>${condition}</div>
+                    <div>${action}</div>
+                    <div>${target}</div>
+                    <div><span class="state-tag ${status.includes("待") ? "warning" : ""}">${status}</span></div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+
+        <section class="worktable-panel reports-two-column">
+          <div>
+            <div class="erp-panel-title">
+              <div>
+                <h3>执行日志</h3>
+                <p>自动化不是只看配置，更要看每次运行结果。</p>
+              </div>
+            </div>
+            <div class="automation-log-list">
+              ${automationExecutionRows
+                .map(
+                  ([time, flow, status, failed, detail]) => `
+                    <div>
+                      <span>${time}</span>
+                      <strong>${flow}</strong>
+                      <em>${status}</em>
+                      <small>失败 ${failed} · ${detail}</small>
+                    </div>
+                  `,
+                )
+                .join("")}
+            </div>
+          </div>
+          <div>
+            <div class="erp-panel-title">
+              <div>
+                <h3>失败人工接管</h3>
+                <p>第一版不追求全自动，关键是失败后能被看见并交给人处理。</p>
+              </div>
+            </div>
+            <div class="automation-handoff-list">
+              ${automationHandoffRows
+                .map(
+                  ([title, condition, action]) => `
+                    <div>
+                      <strong>${title}</strong>
+                      <span>${condition}</span>
+                      <em>${action}</em>
+                    </div>
+                  `,
+                )
+                .join("")}
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <aside class="editor-rail">
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>自动化定位</strong>
+            <span>发动机舱</span>
+          </div>
+          <div class="rail-task-list">
+            <div class="rail-task"><strong>员工不看规则</strong><span>投手、剪辑、财务只看被派发的任务和异常</span></div>
+            <div class="rail-task"><strong>管理员看运行</strong><span>这里看流程是否启用、是否失败、谁接管</span></div>
+            <div class="rail-task"><strong>规则不全铺</strong><span>页面只列业务关键规则，细节进入后续配置</span></div>
+          </div>
+        </section>
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>优先顺序</strong>
+            <span>P0 -> P1</span>
+          </div>
+          <div class="sync-list">
+            <div class="sync-row"><div><strong>账户巡检</strong><span>先把投手今日任务跑出来</span></div><em>P0</em></div>
+            <div class="sync-row"><div><strong>卡审转交</strong><span>同步投手和对应剪辑</span></div><em>P0</em></div>
+            <div class="sync-row"><div><strong>账务同步</strong><span>报表确认后再写飞书</span></div><em>P1</em></div>
+            <div class="sync-row"><div><strong>执行日志</strong><span>所有自动动作都要可追溯</span></div><em>P1</em></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  `;
+}
+
 function renderBackendData() {
   const connectedCount = dataSourceRows.filter((item) => item.status.includes("已") || item.status.includes("可读") || item.status.includes("访问")).length;
   const pendingInterfaceCount = dataSourceRows.filter((item) => item.platform === "飞书").length;
@@ -2272,6 +2490,37 @@ function renderMetrics() {
     return;
   }
 
+  if (activeModuleId === "automation") {
+    const pendingWorkflowCount = automationWorkflowRows.filter((row) => row[4].includes("待")).length;
+    const pendingRuleCount = automationRuleRows.filter((row) => row[5].includes("待")).length;
+    if (topbarAlertButton) {
+      topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>${automationHandoffRows.length} 类接管场景`;
+    }
+    metricGrid.innerHTML = `
+      <article class="metric-card">
+        <span>自动化工作流</span>
+        <strong>${automationWorkflowRows.length}</strong>
+        <small>账户、素材、台账、同步</small>
+      </article>
+      <article class="metric-card">
+        <span>核心规则</span>
+        <strong>${automationRuleRows.length}</strong>
+        <small>触发条件 -> 系统动作</small>
+      </article>
+      <article class="metric-card">
+        <span>待接 / 待配置</span>
+        <strong>${pendingWorkflowCount + pendingRuleCount}</strong>
+        <small>当前不伪装完成</small>
+      </article>
+      <article class="metric-card">
+        <span>人工接管</span>
+        <strong>${automationHandoffRows.length}</strong>
+        <small>失败后生成待办</small>
+      </article>
+    `;
+    return;
+  }
+
   if (topbarAlertButton) {
     topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>待接入提醒`;
   }
@@ -2442,6 +2691,25 @@ function renderTodos() {
     return;
   }
 
+  if (activeModuleId === "automation") {
+    todoList.innerHTML = [
+      ["先接账户巡检", "打开千川账户后采集余额、状态、ROI 和卡审提示"],
+      ["配置卡审转交", "卡审失败同步推送投手和对应剪辑"],
+      ["保留执行日志", "每次自动采集、派发、同步都要可追溯"],
+      ["设置接管规则", "字段缺失、低置信、同步失败时交给人确认"],
+    ]
+      .map(
+        ([title, detail]) => `
+          <div class="todo-item">
+            <strong>${title}</strong>
+            <span>${detail}</span>
+          </div>
+        `,
+      )
+      .join("");
+    return;
+  }
+
   todoList.innerHTML = todos
     .map(
       ([title, detail]) => `
@@ -2458,11 +2726,11 @@ function renderTable() {
   if (tablePanel) {
     tablePanel.classList.toggle(
       "hidden",
-      ["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance", "reports"].includes(activeModuleId),
+      ["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance", "reports", "automation"].includes(activeModuleId),
     );
   }
 
-  if (["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance", "reports"].includes(activeModuleId)) {
+  if (["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance", "reports", "automation"].includes(activeModuleId)) {
     operationTable.innerHTML = "";
     return;
   }
@@ -2510,6 +2778,8 @@ function renderDetails() {
               ? "业务中台 / 财务模块 / 费用与购买记录"
             : activeModuleId === "reports"
               ? "业务中台 / 数据报表 / 账务集合与飞书同步"
+            : activeModuleId === "automation"
+              ? "业务中台 / 自动化中心 / 规则与执行控制台"
           : activeModuleId === "cockpit"
             ? "业务中台 / 管理驾驶舱 / 整体数据一览"
             : `业务中台 / ${item.title}`;
@@ -2535,6 +2805,7 @@ function render() {
   document.body.classList.toggle("accounts-mode", activeModuleId === "accounts");
   document.body.classList.toggle("finance-mode", activeModuleId === "finance");
   document.body.classList.toggle("reports-mode", activeModuleId === "reports");
+  document.body.classList.toggle("automation-mode", activeModuleId === "automation");
   renderNav();
   renderMetrics();
   if (activeModuleId === "cockpit") {
@@ -2551,6 +2822,8 @@ function render() {
     renderFinance();
   } else if (activeModuleId === "reports") {
     renderReports();
+  } else if (activeModuleId === "automation") {
+    renderAutomation();
   } else if (activeModuleId === "aiImages") {
     renderAIImages();
   } else if (activeModuleId === "backendData") {

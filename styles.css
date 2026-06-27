@@ -3083,7 +3083,8 @@ body {
 .materials-workbench,
 .accounts-workbench,
 .finance-workbench,
-.reports-workbench {
+.reports-workbench,
+.automation-workbench {
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: minmax(0, 1fr) 318px;
@@ -3121,6 +3122,108 @@ body {
   margin: 7px 0 4px;
   color: #111827;
   font-size: 24px;
+}
+
+.automation-main {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.automation-pipeline {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) 22px minmax(130px, 1fr) 22px minmax(130px, 1fr) 22px minmax(130px, 1fr) 22px minmax(130px, 1fr);
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #e6e8ee;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.automation-pipeline > svg {
+  align-self: center;
+  justify-self: center;
+  width: 16px;
+  color: #9ca3af;
+}
+
+.automation-pipeline article {
+  display: grid;
+  gap: 5px;
+  min-height: 88px;
+  padding: 10px;
+  border: 1px solid #e6e8ee;
+  border-radius: 4px;
+  background: #fbfcfe;
+}
+
+.automation-pipeline article svg {
+  width: 18px;
+  color: #1d4ed8;
+}
+
+.automation-pipeline strong,
+.automation-log-list strong,
+.automation-handoff-list strong {
+  color: #111827;
+  font-size: 13px;
+}
+
+.automation-pipeline span,
+.automation-log-list span,
+.automation-log-list small,
+.automation-handoff-list span {
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.automation-flow-row {
+  grid-template-columns: 120px minmax(150px, 1fr) minmax(130px, 0.9fr) minmax(120px, 0.9fr) 92px minmax(240px, 1.4fr);
+  min-width: 980px;
+}
+
+.automation-rule-row {
+  grid-template-columns: 88px 112px minmax(150px, 1fr) minmax(160px, 1.05fr) minmax(120px, 0.8fr) 92px;
+  min-width: 900px;
+}
+
+.automation-log-list,
+.automation-handoff-list {
+  display: grid;
+  gap: 8px;
+}
+
+.automation-log-list div,
+.automation-handoff-list div {
+  display: grid;
+  gap: 4px;
+  min-height: 66px;
+  padding: 9px 10px;
+  border: 1px solid #e6e8ee;
+  border-radius: 4px;
+  background: #fbfcfe;
+}
+
+.automation-log-list div {
+  grid-template-columns: minmax(130px, 0.9fr) minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.automation-log-list small {
+  grid-column: 1 / -1;
+}
+
+.automation-log-list em,
+.automation-handoff-list em {
+  justify-self: start;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: #6b7280;
+  background: #f2f3f5;
+  font-size: 12px;
+  font-style: normal;
 }
 
 .report-ledger {
@@ -3415,8 +3518,13 @@ body {
   .cockpit-mini-grid,
   .cockpit-section-grid,
   .finance-overview-grid,
+  .automation-pipeline,
   .reports-two-column {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .automation-pipeline > svg {
+    display: none;
   }
 }
 
@@ -3446,10 +3554,12 @@ body {
   .accounts-workbench,
   .finance-workbench,
   .reports-workbench,
+  .automation-workbench,
   .cockpit-kpi-grid,
   .cockpit-mini-grid,
   .cockpit-section-grid,
   .finance-overview-grid,
+  .automation-pipeline,
   .reports-two-column,
   .cockpit-rail,
   .admin-query-panel,
