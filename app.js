@@ -8,6 +8,7 @@ const modules = [
     status: "管理视角",
     description: "管理者查看月度数据、昨日数据、员工工作量、工作内容、完成进度和需要干预的异常。",
     owner: "管理者",
+    group: "经营总览",
     next: "接入自动采集后的经营与人员进度数据",
     actions: ["查看月度经营", "查看昨日数据", "查看员工进度", "处理异常"],
   },
@@ -20,6 +21,7 @@ const modules = [
     status: "首页",
     description: "投手每天的主入口，集中处理待调账户、素材审核、卡审反馈、低质搬运、台账核算和充值开票。",
     owner: "投手组",
+    group: "一线工作台",
     next: "拆账户调整动作",
     actions: ["打开千川账户", "记录调整", "处理卡审", "查看复盘"],
   },
@@ -32,6 +34,7 @@ const modules = [
     status: "新增",
     description: "剪辑每天的主入口，只处理卡审修改、素材剪辑数量、绿联云盘上传进度和按素材命名归因的销售额。",
     owner: "剪辑组",
+    group: "一线工作台",
     next: "接入绿联云盘和剪映入口",
     actions: ["处理卡审修改", "领取剪辑数量", "上传绿联云盘", "查看销售归因"],
   },
@@ -44,6 +47,7 @@ const modules = [
     status: "历史素材库",
     description: "展示历史素材、文件夹、人员归档和绿联云盘分类，方便按人、项目、素材类型追溯和复用。",
     owner: "剪辑组 / 投手组",
+    group: "业务资产",
     next: "接入绿联云盘文件夹、文件数、上传人和素材标签",
     actions: ["查看历史素材", "按人筛选", "查看文件夹", "同步绿联云盘"],
   },
@@ -56,6 +60,7 @@ const modules = [
     status: "空壳",
     description: "管理千川账户、达人账户、抖音账号、登录状态、账户链接、充值、开票、挂账和账户素材维护。",
     owner: "投手组",
+    group: "业务资产",
     next: "建立账户登录清单",
     actions: ["打开后台", "检查登录态", "记录充值", "记录开票"],
   },
@@ -68,6 +73,7 @@ const modules = [
     status: "新增",
     description: "承载充值、发票、物料购买、账户购买、刷粉数量和相关费用确认。",
     owner: "投手组 / 财务",
+    group: "经营总览",
     next: "建立费用类历史记录和待确认提醒",
     actions: ["充值确认", "发票对账", "物料购买", "账户购买", "刷粉数量"],
   },
@@ -80,6 +86,7 @@ const modules = [
     status: "审核优先",
     description: "先做美妆个护图片与文案合规审核，通过后再接 OpenAI Imagine 生图制作，最后产出可被投手和剪辑引用的图片。",
     owner: "投手组 / 剪辑组",
+    group: "一线工作台",
     next: "接入 beauty-compliance-audit 审核规则，再接 OpenAI Imagine 生成链路",
     actions: ["上传审核", "违规改写", "通过后生图", "产出图片", "引用记录"],
   },
@@ -92,6 +99,7 @@ const modules = [
     status: "账务集合地",
     description: "承载财务里所有账：收入、支出、报销、物料、账户购买、刷粉、投流等系统内记录，并预留云端同步到飞书。",
     owner: "管理者 / 财务",
+    group: "经营总览",
     next: "建立系统内记录库，再同步到飞书表格/多维表",
     actions: ["录入账务", "查询历史", "汇总收支", "同步飞书"],
   },
@@ -104,6 +112,7 @@ const modules = [
     status: "运行控制台",
     description: "承载自动采集、规则判断、任务派发、执行日志和失败人工接管；员工看任务结果，管理员看自动化运行状态。",
     owner: "系统",
+    group: "自动化与数据",
     next: "先配置账户巡检、卡审转交、飞书同步和台账核算四条工作流",
     actions: ["查看工作流", "查看规则库", "重试失败任务", "人工接管"],
   },
@@ -116,20 +125,22 @@ const modules = [
     status: "接入层",
     description: "优先通过内置浏览器自动采集千川后台、截图识别和规则抽取生成任务；飞书/WPS 只作为历史底表和兜底数据源。",
     owner: "系统 / 运营",
+    group: "自动化与数据",
     next: "先打通内置浏览器采集规则，再补飞书/WPS字段映射",
     actions: ["打开后台采集", "截图识别", "抽取字段", "推送任务"],
   },
   {
     id: "system",
-    title: "系统管理",
-    nav: "系统",
-    icon: "shield-check",
+    title: "系统设置",
+    nav: "设置",
+    icon: "settings",
     priority: "P2",
-    status: "空壳",
-    description: "员工、组别、角色、权限、操作日志、字段配置和通知设置。",
+    status: "管理员入口",
+    description: "承接人员角色、权限范围、字段字典、通知策略、操作审计和系统参数，不作为员工日常工作台。",
     owner: "管理员",
-    next: "确定角色权限",
-    actions: ["配置人员", "配置权限", "查看日志", "配置字段"],
+    group: "管理配置",
+    next: "先固化投手、剪辑、财务、管理者四类角色和通知策略",
+    actions: ["配置人员", "配置权限", "字段字典", "通知策略"],
   },
 ];
 
@@ -522,6 +533,34 @@ const automationHandoffRows = [
   ["规则冲突", "同一账户同时命中多个高优先级规则", "进入管理者复核"],
 ];
 
+const settingsRoleRows = [
+  ["管理者", "全局驾驶舱、报表、自动化、设置", "可查看全局数据 / 可处理高优先级异常", "待配置"],
+  ["投手组", "投手工作台、账户、财务部分记录", "只能处理自己负责账户和任务", "待配置"],
+  ["剪辑组", "剪辑工作台、素材中心", "只看卡审修改、素材任务和上传进度", "待配置"],
+  ["财务", "财务、报表、同步失败接管", "确认金额、报销、支出和飞书同步异常", "待配置"],
+];
+
+const settingsFieldRows = [
+  ["账户状态", "正常 / 低余额 / 异常 / 待核对 / 待充值", "账户中心 / 投手任务"],
+  ["素材状态", "待审核 / 卡审失败 / 待修改 / 已上传 / 待复核", "剪辑工作台 / 素材中心"],
+  ["费用类型", "投流 / 物料 / 账户购买 / 刷粉 / 报销 / 其他", "财务 / 报表"],
+  ["同步状态", "待同步 / 已同步 / 同步失败 / 人工接管", "报表 / 自动化"],
+];
+
+const settingsNotifyRows = [
+  ["低余额提醒", "账户余额低于阈值", "对应投手 + 财务", "待配置"],
+  ["卡审失败", "素材审核失败或出现驳回原因", "投手 + 对应剪辑", "待接"],
+  ["飞书同步失败", "账务写入飞书失败", "财务 + 管理者", "待接口"],
+  ["规则冲突", "同一对象命中多个高优先级规则", "管理者", "待配置"],
+];
+
+const settingsAuditRows = [
+  ["2026-06-27 12:10", "自动化中心", "新增运行控制台结构", "系统", "已发布"],
+  ["2026-06-27 11:58", "数据报表", "补充飞书同步队列和字段映射", "系统", "已发布"],
+  ["2026-06-26 20:58", "剪辑工作台", "新增卡审修改和绿联云盘进度", "系统", "已发布"],
+  ["2026-06-26 20:31", "投手工作台", "确定内置浏览器自动采集优先", "系统", "已发布"],
+];
+
 let activeModuleId = "cockpit";
 let activeFilter = "all";
 let activeBuyerId = "liuxiuting";
@@ -555,16 +594,27 @@ function priorityKey(priority) {
 }
 
 function renderNav() {
-  moduleNav.innerHTML = modules
-    .map(
-      (item) => `
-        <button class="nav-item ${item.id === activeModuleId ? "active" : ""}" type="button" data-module="${item.id}">
-          <i data-lucide="${item.icon}"></i>
-          <span>${item.nav}</span>
-          <span class="nav-priority">${item.priority}</span>
-        </button>
-      `,
-    )
+  const groups = [...new Set(modules.map((item) => item.group || "其他"))];
+  moduleNav.innerHTML = groups
+    .map((group) => {
+      const groupItems = modules.filter((item) => (item.group || "其他") === group);
+      return `
+        <div class="nav-section">
+          <div class="nav-section-title">${group}</div>
+          ${groupItems
+            .map(
+              (item) => `
+                <button class="nav-item ${item.id === activeModuleId ? "active" : ""}" type="button" data-module="${item.id}">
+                  <i data-lucide="${item.icon}"></i>
+                  <span>${item.nav}</span>
+                  <span class="nav-priority">${item.priority}</span>
+                </button>
+              `,
+            )
+            .join("")}
+        </div>
+      `;
+    })
     .join("");
 }
 
@@ -2142,6 +2192,171 @@ function renderAutomation() {
   `;
 }
 
+function renderSettings() {
+  chartArea.innerHTML = `
+    <div class="settings-workbench">
+      <section class="settings-main">
+        <div class="admin-page-meta">
+          <div>
+            <span>内容创新部 / 管理配置</span>
+            <strong>系统设置</strong>
+          </div>
+          <div class="admin-meta-tags">
+            <span>人员角色</span>
+            <span>权限范围</span>
+            <span>字段字典</span>
+            <span>通知策略</span>
+            <span>审计日志</span>
+          </div>
+        </div>
+
+        <div class="settings-command-grid">
+          <article><i data-lucide="users"></i><div><strong>角色权限</strong><span>先固化管理者、投手、剪辑、财务四类权限</span></div></article>
+          <article><i data-lucide="list-checks"></i><div><strong>字段字典</strong><span>账户、素材、费用、同步状态统一口径</span></div></article>
+          <article><i data-lucide="bell-ring"></i><div><strong>通知策略</strong><span>异常命中后推给对应员工，不靠人记得转发</span></div></article>
+          <article><i data-lucide="shield-check"></i><div><strong>审计留痕</strong><span>规则、金额、权限、同步配置变更都要可追溯</span></div></article>
+        </div>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>角色与权限范围</h3>
+              <p>设置页不承载日常业务，只管理谁能看、谁能改、谁负责接管。</p>
+            </div>
+            <div class="erp-batch-actions">
+              <button class="mini-button" type="button">新增角色</button>
+              <button class="mini-button" type="button">权限模板</button>
+              <button class="mini-button" type="button">保存配置</button>
+            </div>
+          </div>
+          <div class="editor-table">
+            <div class="editor-table-row settings-role-row header">
+              <div>角色</div>
+              <div>可访问模块</div>
+              <div>权限边界</div>
+              <div>状态</div>
+            </div>
+            ${settingsRoleRows
+              .map(
+                ([role, modulesText, scope, status]) => `
+                  <div class="editor-table-row settings-role-row">
+                    <div><strong>${role}</strong></div>
+                    <div>${modulesText}</div>
+                    <div>${scope}</div>
+                    <div><span class="state-tag warning">${status}</span></div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+
+        <section class="worktable-panel reports-two-column">
+          <div>
+            <div class="erp-panel-title">
+              <div>
+                <h3>字段字典</h3>
+                <p>避免每个模块各自写一套状态词。</p>
+              </div>
+            </div>
+            <div class="settings-list">
+              ${settingsFieldRows
+                .map(
+                  ([name, values, used]) => `
+                    <div>
+                      <strong>${name}</strong>
+                      <span>${values}</span>
+                      <em>${used}</em>
+                    </div>
+                  `,
+                )
+                .join("")}
+            </div>
+          </div>
+          <div>
+            <div class="erp-panel-title">
+              <div>
+                <h3>通知策略</h3>
+                <p>任务派发要靠规则和通知，不靠人工记得同步。</p>
+              </div>
+            </div>
+            <div class="settings-list">
+              ${settingsNotifyRows
+                .map(
+                  ([name, condition, target, status]) => `
+                    <div>
+                      <strong>${name}</strong>
+                      <span>${condition}</span>
+                      <small>${target}</small>
+                      <em>${status}</em>
+                    </div>
+                  `,
+                )
+                .join("")}
+            </div>
+          </div>
+        </section>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>操作审计</h3>
+              <p>所有规则、权限、字段和关键金额变更都要留下可追溯记录。</p>
+            </div>
+          </div>
+          <div class="editor-table compact">
+            <div class="editor-table-row settings-audit-row header">
+              <div>时间</div>
+              <div>模块</div>
+              <div>动作</div>
+              <div>操作者</div>
+              <div>状态</div>
+            </div>
+            ${settingsAuditRows
+              .map(
+                ([time, moduleName, action, operator, status]) => `
+                  <div class="editor-table-row settings-audit-row">
+                    <div>${time}</div>
+                    <div><strong>${moduleName}</strong></div>
+                    <div>${action}</div>
+                    <div>${operator}</div>
+                    <div><span class="state-tag">${status}</span></div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+      </section>
+
+      <aside class="editor-rail">
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>设置定位</strong>
+            <span>管理员</span>
+          </div>
+          <div class="rail-task-list">
+            <div class="rail-task"><strong>不做业务入口</strong><span>员工每天不从设置开始工作</span></div>
+            <div class="rail-task"><strong>统一口径</strong><span>角色、字段、通知、阈值在这里配置</span></div>
+            <div class="rail-task"><strong>防止黑箱</strong><span>权限和规则变更必须进审计日志</span></div>
+          </div>
+        </section>
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>后续参数</strong>
+            <span>待配置</span>
+          </div>
+          <div class="sync-list">
+            <div class="sync-row"><div><strong>低余额阈值</strong><span>账户余额低于多少触发提醒</span></div><em>待配置</em></div>
+            <div class="sync-row"><div><strong>ROI 阈值</strong><span>低于多少进入投手调控任务</span></div><em>待配置</em></div>
+            <div class="sync-row"><div><strong>同步频率</strong><span>飞书、绿联、后台采集间隔</span></div><em>待配置</em></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  `;
+}
+
 function renderBackendData() {
   const connectedCount = dataSourceRows.filter((item) => item.status.includes("已") || item.status.includes("可读") || item.status.includes("访问")).length;
   const pendingInterfaceCount = dataSourceRows.filter((item) => item.platform === "飞书").length;
@@ -2521,6 +2736,35 @@ function renderMetrics() {
     return;
   }
 
+  if (activeModuleId === "system") {
+    if (topbarAlertButton) {
+      topbarAlertButton.innerHTML = `<i data-lucide="shield-check"></i>管理员配置`;
+    }
+    metricGrid.innerHTML = `
+      <article class="metric-card">
+        <span>角色模板</span>
+        <strong>${settingsRoleRows.length}</strong>
+        <small>管理者、投手、剪辑、财务</small>
+      </article>
+      <article class="metric-card">
+        <span>字段字典</span>
+        <strong>${settingsFieldRows.length}</strong>
+        <small>统一状态和分类口径</small>
+      </article>
+      <article class="metric-card">
+        <span>通知策略</span>
+        <strong>${settingsNotifyRows.length}</strong>
+        <small>异常自动推给对应人</small>
+      </article>
+      <article class="metric-card">
+        <span>审计记录</span>
+        <strong>${settingsAuditRows.length}</strong>
+        <small>规则和配置变更留痕</small>
+      </article>
+    `;
+    return;
+  }
+
   if (topbarAlertButton) {
     topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>待接入提醒`;
   }
@@ -2710,6 +2954,25 @@ function renderTodos() {
     return;
   }
 
+  if (activeModuleId === "system") {
+    todoList.innerHTML = [
+      ["配置角色权限", "先固化管理者、投手、剪辑、财务四类权限"],
+      ["统一字段字典", "账户状态、素材状态、费用类型、同步状态统一口径"],
+      ["配置通知策略", "低余额、卡审失败、同步失败要推给对应人"],
+      ["保留审计日志", "规则、字段、权限和金额变更都要可追溯"],
+    ]
+      .map(
+        ([title, detail]) => `
+          <div class="todo-item">
+            <strong>${title}</strong>
+            <span>${detail}</span>
+          </div>
+        `,
+      )
+      .join("");
+    return;
+  }
+
   todoList.innerHTML = todos
     .map(
       ([title, detail]) => `
@@ -2726,11 +2989,11 @@ function renderTable() {
   if (tablePanel) {
     tablePanel.classList.toggle(
       "hidden",
-      ["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance", "reports", "automation"].includes(activeModuleId),
+      ["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance", "reports", "automation", "system"].includes(activeModuleId),
     );
   }
 
-  if (["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance", "reports", "automation"].includes(activeModuleId)) {
+  if (["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance", "reports", "automation", "system"].includes(activeModuleId)) {
     operationTable.innerHTML = "";
     return;
   }
@@ -2780,6 +3043,8 @@ function renderDetails() {
               ? "业务中台 / 数据报表 / 账务集合与飞书同步"
             : activeModuleId === "automation"
               ? "业务中台 / 自动化中心 / 规则与执行控制台"
+            : activeModuleId === "system"
+              ? "业务中台 / 系统设置 / 权限字段与审计"
           : activeModuleId === "cockpit"
             ? "业务中台 / 管理驾驶舱 / 整体数据一览"
             : `业务中台 / ${item.title}`;
@@ -2806,6 +3071,7 @@ function render() {
   document.body.classList.toggle("finance-mode", activeModuleId === "finance");
   document.body.classList.toggle("reports-mode", activeModuleId === "reports");
   document.body.classList.toggle("automation-mode", activeModuleId === "automation");
+  document.body.classList.toggle("settings-mode", activeModuleId === "system");
   renderNav();
   renderMetrics();
   if (activeModuleId === "cockpit") {
@@ -2824,6 +3090,8 @@ function render() {
     renderReports();
   } else if (activeModuleId === "automation") {
     renderAutomation();
+  } else if (activeModuleId === "system") {
+    renderSettings();
   } else if (activeModuleId === "aiImages") {
     renderAIImages();
   } else if (activeModuleId === "backendData") {
