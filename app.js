@@ -346,6 +346,26 @@ const financeHistoryRows = [
   ["2026-06-25", "充值确认", "切片账户低余额提醒", "苑佳乐", "待到账"],
 ];
 
+const financeIncomeRows = [
+  ["整体支付金额", "待采集", "卖货产生的支付金额"],
+  ["有效收入金额", "待采集", "剔除退款、异常订单后的有效收入"],
+];
+
+const financeExpenseRows = [
+  ["投流消耗", "待采集", "千川账户自动采集"],
+  ["物料采买", "待登记", "拍摄道具、样品、包材"],
+  ["账户购买", "待登记", "抖音号、达人号、第三方账户"],
+  ["刷粉费用", "待确认", "账号刷粉数量与费用"],
+  ["其他费用", "待登记", "临时采购、外包、工具订阅等"],
+];
+
+const accountCategoryRows = [
+  ["千川账户", () => realAccountRows.filter((row) => row.账户ID).length, "投放后台账户"],
+  ["商品卡账户", () => realAccountRows.filter((row) => row.账户类型 === "商品卡").length, "商品卡投放相关"],
+  ["切片账户", () => realAccountRows.filter((row) => row.账户类型 === "切片").length, "达人/切片投放相关"],
+  ["未归类账户", () => realAccountRows.filter((row) => row.账户类型 === "未归类").length, "源表字段待清理"],
+];
+
 const historyRows = [
   ["2026-06-27 10:42", "管理驾驶舱", "查看月度、昨日和员工进度", "系统", "已记录"],
   ["2026-06-26 20:58", "剪辑工作台", "新增卡审修改和绿联云盘进度", "系统", "已发布"],
@@ -1462,32 +1482,161 @@ function renderMaterials() {
   `;
 }
 
+function renderAccounts() {
+  const rows = uniqueRows(realAccountRows).slice(0, 60);
+  const abnormalRows = getAbnormalRows(realAccountRows);
+  const lowBalanceRows = getRechargeRows(realAccountRows);
+
+  chartArea.innerHTML = `
+    <div class="accounts-workbench">
+      <section class="materials-main">
+        <div class="admin-page-meta">
+          <div>
+            <span>内容创新部 / 账户资产</span>
+            <strong>账户中心</strong>
+          </div>
+          <div class="admin-meta-tags">
+            <span>账户总表</span>
+            <span>按类型分类</span>
+            <span>状态自动采集待接</span>
+          </div>
+        </div>
+
+        <div class="editor-summary">
+          <div><span>全部账户</span><strong>${uniqueRows(realAccountRows).length}</strong></div>
+          <div><span>商品卡</span><strong>${realAccountRows.filter((row) => row.账户类型 === "商品卡").length}</strong></div>
+          <div><span>切片</span><strong>${realAccountRows.filter((row) => row.账户类型 === "切片").length}</strong></div>
+          <div><span>账户异常</span><strong>${abnormalRows.length}</strong></div>
+          <div><span>低余额</span><strong>${lowBalanceRows.length}</strong></div>
+        </div>
+
+        <div class="editor-object-row">
+          ${accountCategoryRows
+            .map(
+              ([title, countFn, detail]) => `
+                <article><i data-lucide="wallet-cards"></i><div><strong>${title}</strong><span>${countFn()} 个 / ${detail}</span></div></article>
+              `,
+            )
+            .join("")}
+          <article><i data-lucide="activity"></i><div><strong>状态采集</strong><span>未来由内置浏览器自动采集余额、登录态和异常</span></div></article>
+        </div>
+
+        <section class="worktable-panel">
+          <div class="erp-panel-title">
+            <div>
+              <h3>账户列表</h3>
+              <p>把所有账户作为资产清单集中展示；余额和状态后续从后台自动采集。</p>
+            </div>
+            <div class="erp-batch-actions">
+              <button class="mini-button" type="button">按类型筛选</button>
+              <button class="mini-button" type="button">按负责人筛选</button>
+              <button class="mini-button" type="button">采集状态</button>
+            </div>
+          </div>
+          <div class="editor-table">
+            <div class="editor-table-row account header">
+              <div>账户</div>
+              <div>账户ID</div>
+              <div>类型</div>
+              <div>负责人</div>
+              <div>余额</div>
+              <div>状态</div>
+              <div>备注</div>
+            </div>
+            ${rows
+              .map(
+                (row) => `
+                  <div class="editor-table-row account">
+                    <div><strong>${formatAccountName(row)}</strong><small>${row.账户用途 || "用途未填"}</small></div>
+                    <div>${row.账户ID || "无账户ID"}</div>
+                    <div>${row.账户类型} / ${row.项目}</div>
+                    <div>${row.登记人 || row.账户使用人 || "未填"}</div>
+                    <div>${formatMoney(row.余额)}</div>
+                    <div><span class="state-tag ${row.今日异常 !== "正常使用中" ? "warning" : ""}">${row.今日异常}</span></div>
+                    <div>${row.备注 || "无"}</div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+      </section>
+
+      <aside class="editor-rail">
+        <section class="rail-panel">
+          <div class="rail-title">
+            <strong>账户中心先做</strong>
+            <span>资产清单</span>
+          </div>
+          <div class="rail-task-list">
+            <div class="rail-task"><strong>统一账户列表</strong><span>所有千川、商品卡、切片、达人相关账户集中展示</span></div>
+            <div class="rail-task warning"><strong>异常账户</strong><span>${abnormalRows.length} 个账户状态需要确认</span></div>
+            <div class="rail-task"><strong>自动采集</strong><span>内置浏览器采集余额、登录态、账户状态</span></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  `;
+}
+
 function renderFinance() {
   chartArea.innerHTML = `
-    <div class="account-board">
-      ${financeRows
-        .map(
-          ([area, owner, issue, action, button]) => `
-            <article class="account-card">
+    <div class="finance-workbench">
+      <section class="materials-main">
+        <div class="admin-page-meta">
+          <div>
+            <span>内容创新部 / 本月收支</span>
+            <strong>财务模块</strong>
+          </div>
+          <div class="admin-meta-tags">
+            <span>卖货收入</span>
+            <span>投流支出</span>
+            <span>采买费用</span>
+            <span>历史记录</span>
+          </div>
+        </div>
+
+        <div class="finance-overview-grid">
+          <article><span>本月整体支付金额</span><strong>待采集</strong><small>卖货收入：全部支付金额</small></article>
+          <article><span>本月有效收入金额</span><strong>待采集</strong><small>剔除退款、异常后的有效收入</small></article>
+          <article><span>本月总支出</span><strong>待汇总</strong><small>投流 + 物料 + 账户 + 刷粉 + 其他</small></article>
+          <article><span>本月净结果</span><strong>待计算</strong><small>有效收入 - 总支出</small></article>
+        </div>
+
+        <div class="cockpit-section-grid">
+          <section class="worktable-panel">
+            <div class="erp-panel-title">
               <div>
-                <strong>${area}</strong>
-                <span>${owner}</span>
+                <h3>收入构成</h3>
+                <p>收入只有卖货收入，拆整体支付金额和有效收入金额。</p>
               </div>
-              <div class="issue-tag">${issue}</div>
-              <p>${action}</p>
-              <button class="mini-button" type="button">${button}</button>
-            </article>
-          `,
-        )
-        .join("")}
-    </div>
-    <div class="action-strip">
-      <button class="quick-action" type="button"><i data-lucide="shopping-cart"></i> 记录物料购买</button>
-      <button class="quick-action" type="button"><i data-lucide="badge-dollar-sign"></i> 记录账户购买</button>
-      <button class="quick-action" type="button"><i data-lucide="user-plus"></i> 记录刷粉数量</button>
-      <button class="quick-action" type="button"><i data-lucide="bell-ring"></i> 设置充值提醒</button>
-      <button class="quick-action" type="button"><i data-lucide="receipt-text"></i> 核对发票金额</button>
-    </div>
+            </div>
+            <div class="finance-breakdown-list">
+              ${financeIncomeRows.map(([title, value, detail]) => `<div><strong>${title}</strong><span>${detail}</span><em>${value}</em></div>`).join("")}
+            </div>
+          </section>
+
+          <section class="worktable-panel">
+            <div class="erp-panel-title">
+              <div>
+                <h3>支出种类</h3>
+                <p>支出按业务费用分类，便于看钱花在哪里。</p>
+              </div>
+            </div>
+            <div class="finance-breakdown-list">
+              ${financeExpenseRows.map(([title, value, detail]) => `<div><strong>${title}</strong><span>${detail}</span><em>${value}</em></div>`).join("")}
+            </div>
+          </section>
+        </div>
+
+        <div class="action-strip finance-actions">
+          <button class="quick-action" type="button"><i data-lucide="shopping-cart"></i> 记录物料购买</button>
+          <button class="quick-action" type="button"><i data-lucide="badge-dollar-sign"></i> 记录账户购买</button>
+          <button class="quick-action" type="button"><i data-lucide="user-plus"></i> 记录刷粉数量</button>
+          <button class="quick-action" type="button"><i data-lucide="bell-ring"></i> 设置充值提醒</button>
+          <button class="quick-action" type="button"><i data-lucide="receipt-text"></i> 核对发票金额</button>
+        </div>
+
     <section class="worktable-panel finance-history-panel">
       <div class="erp-panel-title">
         <div>
@@ -1518,6 +1667,8 @@ function renderFinance() {
           .join("")}
       </div>
     </section>
+      </section>
+    </div>
   `;
 }
 
@@ -1781,28 +1932,58 @@ function renderMetrics() {
 
   if (activeModuleId === "finance") {
     if (topbarAlertButton) {
-      topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>${financeHistoryRows.length} 条费用记录`;
+      topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>本月收支待采集`;
     }
     metricGrid.innerHTML = `
       <article class="metric-card">
-        <span>物料购买</span>
-        <strong>待登记</strong>
-        <small>拍摄道具、样品、包材</small>
+        <span>本月支付金额</span>
+        <strong>待采集</strong>
+        <small>卖货整体支付金额</small>
       </article>
       <article class="metric-card">
-        <span>账户购买</span>
-        <strong>待登记</strong>
-        <small>抖音号、达人号、第三方账户</small>
+        <span>本月有效收入</span>
+        <strong>待采集</strong>
+        <small>剔除退款和异常</small>
       </article>
       <article class="metric-card">
-        <span>刷粉数量</span>
-        <strong>待确认</strong>
-        <small>数量、费用、负责人</small>
+        <span>本月总支出</span>
+        <strong>待汇总</strong>
+        <small>投流、物料、账户、刷粉、其他</small>
       </article>
       <article class="metric-card">
-        <span>财务历史</span>
-        <strong>${financeHistoryRows.length}</strong>
-        <small>可追溯记录</small>
+        <span>支出种类</span>
+        <strong>${financeExpenseRows.length}</strong>
+        <small>按费用类型归类</small>
+      </article>
+    `;
+    return;
+  }
+
+  if (activeModuleId === "accounts") {
+    const uniqueCount = uniqueRows(realAccountRows).length;
+    if (topbarAlertButton) {
+      topbarAlertButton.innerHTML = `<i data-lucide="bell"></i>${getAbnormalRows(realAccountRows).length} 个账户异常`;
+    }
+    metricGrid.innerHTML = `
+      <article class="metric-card">
+        <span>全部账户</span>
+        <strong>${uniqueCount}</strong>
+        <small>已读取账户资产清单</small>
+      </article>
+      <article class="metric-card">
+        <span>商品卡账户</span>
+        <strong>${realAccountRows.filter((row) => row.账户类型 === "商品卡").length}</strong>
+        <small>商品卡投放相关</small>
+      </article>
+      <article class="metric-card">
+        <span>切片账户</span>
+        <strong>${realAccountRows.filter((row) => row.账户类型 === "切片").length}</strong>
+        <small>达人/切片投放相关</small>
+      </article>
+      <article class="metric-card">
+        <span>账户异常</span>
+        <strong>${getAbnormalRows(realAccountRows).length}</strong>
+        <small class="down">待自动采集核对</small>
       </article>
     `;
     return;
@@ -1923,10 +2104,29 @@ function renderTodos() {
 
   if (activeModuleId === "finance") {
     todoList.innerHTML = [
-      ["记录物料购买", "拍摄道具、样品、包材等费用"],
-      ["记录账户购买", "抖音号、达人号、第三方账户来源和成本"],
-      ["记录刷粉数量", "账号、数量、费用、负责人和结果"],
-      ["保留历史记录", "后续查询费用和责任人"],
+      ["看本月收入", "整体支付金额和有效收入金额"],
+      ["看本月支出", "投流、物料、账户、刷粉和其他费用"],
+      ["补费用记录", "物料购买、账户购买、刷粉数量"],
+      ["查历史记录", "后续查询费用、负责人和状态"],
+    ]
+      .map(
+        ([title, detail]) => `
+          <div class="todo-item">
+            <strong>${title}</strong>
+            <span>${detail}</span>
+          </div>
+        `,
+      )
+      .join("");
+    return;
+  }
+
+  if (activeModuleId === "accounts") {
+    todoList.innerHTML = [
+      ["查看账户总数", "所有账户集中列表展示"],
+      ["按分类查看", "商品卡、切片、未归类等分类"],
+      ["核对异常账户", "状态异常和低余额账户需要确认"],
+      ["等待自动采集", "内置浏览器采集余额、登录态、账户状态"],
     ]
       .map(
         ([title, detail]) => `
@@ -1956,11 +2156,11 @@ function renderTable() {
   if (tablePanel) {
     tablePanel.classList.toggle(
       "hidden",
-      ["cockpit", "buyerDesk", "editorDesk", "materials", "finance"].includes(activeModuleId),
+      ["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance"].includes(activeModuleId),
     );
   }
 
-  if (["cockpit", "buyerDesk", "editorDesk", "materials", "finance"].includes(activeModuleId)) {
+  if (["cockpit", "buyerDesk", "editorDesk", "materials", "accounts", "finance"].includes(activeModuleId)) {
     operationTable.innerHTML = "";
     return;
   }
@@ -2002,6 +2202,8 @@ function renderDetails() {
           ? "业务中台 / 剪辑工作台 / 今日素材生产"
           : activeModuleId === "materials"
             ? "业务中台 / 素材中心 / 历史素材与绿联云盘"
+            : activeModuleId === "accounts"
+              ? "业务中台 / 账户中心 / 全部账户列表"
             : activeModuleId === "finance"
               ? "业务中台 / 财务模块 / 费用与购买记录"
           : activeModuleId === "cockpit"
@@ -2026,6 +2228,8 @@ function render() {
   document.body.classList.toggle("buyer-erp-mode", activeModuleId === "buyerDesk");
   document.body.classList.toggle("editor-desk-mode", activeModuleId === "editorDesk");
   document.body.classList.toggle("materials-mode", activeModuleId === "materials");
+  document.body.classList.toggle("accounts-mode", activeModuleId === "accounts");
+  document.body.classList.toggle("finance-mode", activeModuleId === "finance");
   renderNav();
   renderMetrics();
   if (activeModuleId === "cockpit") {
@@ -2036,6 +2240,8 @@ function render() {
     renderEditorDesk();
   } else if (activeModuleId === "materials") {
     renderMaterials();
+  } else if (activeModuleId === "accounts") {
+    renderAccounts();
   } else if (activeModuleId === "finance") {
     renderFinance();
   } else if (activeModuleId === "aiImages") {

@@ -3070,7 +3070,19 @@ body {
   display: none;
 }
 
-.materials-workbench {
+.accounts-mode .dashboard-grid,
+.finance-mode .dashboard-grid {
+  display: block;
+}
+
+.accounts-mode .side-panel,
+.finance-mode .side-panel {
+  display: none;
+}
+
+.materials-workbench,
+.accounts-workbench,
+.finance-workbench {
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: minmax(0, 1fr) 318px;
@@ -3080,6 +3092,76 @@ body {
 
 .finance-history-panel {
   grid-column: 1 / -1;
+}
+
+.finance-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.finance-overview-grid article {
+  min-height: 88px;
+  padding: 12px;
+  border: 1px solid #e6e8ee;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.finance-overview-grid span,
+.finance-overview-grid small {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.finance-overview-grid strong {
+  display: block;
+  margin: 7px 0 4px;
+  color: #111827;
+  font-size: 24px;
+}
+
+.finance-breakdown-list {
+  display: grid;
+  gap: 8px;
+}
+
+.finance-breakdown-list div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  padding: 9px 10px;
+  border: 1px solid #e6e8ee;
+  border-radius: 4px;
+  background: #fbfcfe;
+}
+
+.finance-breakdown-list strong,
+.finance-breakdown-list span {
+  display: block;
+}
+
+.finance-breakdown-list span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.finance-breakdown-list em {
+  grid-row: span 2;
+  align-self: center;
+  padding: 3px 7px;
+  border-radius: 4px;
+  color: #2563eb;
+  background: #eff6ff;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 760;
+}
+
+.editor-table-row.account {
+  grid-template-columns: minmax(240px, 1.4fr) 150px 150px 110px 96px minmax(150px, 1fr) minmax(160px, 1fr);
+  min-width: 1120px;
 }
 
 .cockpit-mode .dashboard-grid {
@@ -3219,7 +3301,9 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .materials-workbench {
+  .materials-workbench,
+  .accounts-workbench,
+  .finance-workbench {
     grid-template-columns: 1fr;
   }
 
@@ -3248,7 +3332,8 @@ body {
   .editor-object-row,
   .cockpit-kpi-grid,
   .cockpit-mini-grid,
-  .cockpit-section-grid {
+  .cockpit-section-grid,
+  .finance-overview-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -3279,6 +3364,7 @@ body {
   .cockpit-kpi-grid,
   .cockpit-mini-grid,
   .cockpit-section-grid,
+  .finance-overview-grid,
   .cockpit-rail,
   .admin-query-panel,
   .business-object-row {
